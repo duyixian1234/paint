@@ -28,3 +28,11 @@ A kanban board to manage tasks in different stages.
 3. Edit a task by clicking on the task description, making changes, and pressing Enter.
 4. Delete a task by clicking the "Delete" button next to the task.
 5. Drag and drop tasks between columns to update their status.
+
+## Fractal Patterns
+fractal.html
+A page to display different fractal patterns using canvas.
+
+### Instructions
+1. Open `fractal.html` in your web browser.
+2. Click on the buttons to switch between different fractal patterns (Mandelbrot Set, Julia Set, Sierpinski Triangle).
