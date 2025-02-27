@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fractal Patterns</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            border: 1px solid #000;
+            margin-bottom: 20px;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fractalCanvas" width="800" height="800"></canvas>
+    <div class="buttons">
+        <button onclick="drawMandelbrot()">Mandelbrot Set</button>
+        <button onclick="drawJulia()">Julia Set</button>
+        <button onclick="drawSierpinski()">Sierpinski Triangle</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('fractalCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function drawMandelbrot() {
+            const maxIterations = 1000;
+            const magnificationFactor = 200;
+            const panX = 2;
+            const panY = 1.5;
+
+            for (let x = 0; x < canvas.width; x++) {
+                for (let y = 0; y < canvas.height; y++) {
+                    let m = mandelbrot((x / magnificationFactor) - panX, (y / magnificationFactor) - panY, maxIterations);
+                    ctx.fillStyle = `hsl(0, 100%, ${m}%)`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+
+        function mandelbrot(x, y, maxIterations) {
+            let realComponentOfResult = x;
+            let imaginaryComponentOfResult = y;
+            for (let i = 0; i < maxIterations; i++) {
+                let tempRealComponent = realComponentOfResult * realComponentOfResult - imaginaryComponentOfResult * imaginaryComponentOfResult + x;
+                let tempImaginaryComponent = 2 * realComponentOfResult * imaginaryComponentOfResult + y;
+                realComponentOfResult = tempRealComponent;
+                imaginaryComponentOfResult = tempImaginaryComponent;
+
+                if (realComponentOfResult * imaginaryComponentOfResult > 5) return (i / maxIterations) * 100;
+            }
+            return 0;
+        }
+
+        function drawJulia() {
+            const maxIterations = 1000;
+            const magnificationFactor = 200;
+            const panX = 1.5;
+            const panY = 1.5;
+            const cX = -0.7;
+            const cY = 0.27015;
+
+            for (let x = 0; x < canvas.width; x++) {
+                for (let y = 0; y < canvas.height; y++) {
+                    let m = julia((x / magnificationFactor) - panX, (y / magnificationFactor) - panY, cX, cY, maxIterations);
+                    ctx.fillStyle = `hsl(0, 100%, ${m}%)`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+
+        function julia(x, y, cX, cY, maxIterations) {
+            let realComponentOfResult = x;
+            let imaginaryComponentOfResult = y;
+            for (let i = 0; i < maxIterations; i++) {
+                let tempRealComponent = realComponentOfResult * realComponentOfResult - imaginaryComponentOfResult * imaginaryComponentOfResult + cX;
+                let tempImaginaryComponent = 2 * realComponentOfResult * imaginaryComponentOfResult + cY;
+                realComponentOfResult = tempRealComponent;
+                imaginaryComponentOfResult = tempImaginaryComponent;
+
+                if (realComponentOfResult * imaginaryComponentOfResult > 5) return (i / maxIterations) * 100;
+            }
+            return 0;
+        }
+
+        function drawSierpinski() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            sierpinski(400, 50, 750, 750, 50, 750, 7);
+        }
+
+        function sierpinski(x1, y1, x2, y2, x3, y3, depth) {
+            if (depth === 0) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.lineTo(x3, y3);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                let midX1 = (x1 + x2) / 2;
+                let midY1 = (y1 + y2) / 2;
+                let midX2 = (x2 + x3) / 2;
+                let midY2 = (y2 + y3) / 2;
+                let midX3 = (x3 + x1) / 2;
+                let midY3 = (y3 + y1) / 2;
+
+                sierpinski(x1, y1, midX1, midY1, midX3, midY3, depth - 1);
+                sierpinski(x2, y2, midX1, midY1, midX2, midY2, depth - 1);
+                sierpinski(x3, y3, midX2, midY2, midX3, midY3, depth - 1);
+            }
+        }
+    </script>
+</body>
+</html>
