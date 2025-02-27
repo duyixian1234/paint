@@ -59,6 +59,21 @@
         .task button:hover {
             background-color: #c82333;
         }
+        .task .arrow-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .task .arrow-button:hover {
+            background-color: #0056b3;
+        }
+        .task .arrow-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
         .add-task {
             display: flex;
             margin-top: 20px;
@@ -97,18 +112,10 @@
         <div class="kanban-column" id="inprogress-column">
             <h2>In Progress</h2>
             <div class="tasks" id="inprogress-tasks"></div>
-            <div class="add-task">
-                <input type="text" id="new-inprogress-task" placeholder="New task">
-                <button onclick="addTask('inprogress')">Add</button>
-            </div>
         </div>
         <div class="kanban-column" id="done-column">
             <h2>Done</h2>
             <div class="tasks" id="done-tasks"></div>
-            <div class="add-task">
-                <input type="text" id="new-done-task" placeholder="New task">
-                <button onclick="addTask('done')">Add</button>
-            </div>
         </div>
     </div>
     <script>
@@ -119,8 +126,7 @@
 
             const taskDiv = document.createElement('div');
             taskDiv.className = 'task';
-            taskDiv.draggable = true;
-            taskDiv.ondragstart = dragStart;
+            taskDiv.id = `task-${Date.now()}`; // Add unique id
 
             const taskInputField = document.createElement('input');
             taskInputField.type = 'text';
@@ -131,34 +137,67 @@
             deleteButton.textContent = 'Delete';
             deleteButton.onclick = () => taskDiv.remove();
 
+            const leftArrowButton = document.createElement('button');
+            leftArrowButton.textContent = '←';
+            leftArrowButton.className = 'arrow-button';
+            leftArrowButton.onclick = () => moveTask(taskDiv, 'left');
+
+            const rightArrowButton = document.createElement('button');
+            rightArrowButton.textContent = '→';
+            rightArrowButton.className = 'arrow-button';
+            rightArrowButton.onclick = () => moveTask(taskDiv, 'right');
+
+            taskDiv.appendChild(leftArrowButton);
             taskDiv.appendChild(taskInputField);
+            taskDiv.appendChild(rightArrowButton);
             taskDiv.appendChild(deleteButton);
 
             document.getElementById(`${column}-tasks`).appendChild(taskDiv);
             taskInput.value = '';
+
+            updateArrowButtons(taskDiv);
         }
 
-        function dragStart(event) {
-            event.dataTransfer.setData('text/plain', event.target.id);
-            event.dataTransfer.effectAllowed = 'move';
+        function moveTask(taskDiv, direction) {
+            const currentColumn = taskDiv.parentElement.id;
+            let targetColumn;
+
+            if (direction === 'left') {
+                if (currentColumn === 'inprogress-tasks') {
+                    targetColumn = 'todo-tasks';
+                } else if (currentColumn === 'done-tasks') {
+                    targetColumn = 'inprogress-tasks';
+                }
+            } else if (direction === 'right') {
+                if (currentColumn === 'todo-tasks') {
+                    targetColumn = 'inprogress-tasks';
+                } else if (currentColumn === 'inprogress-tasks') {
+                    targetColumn = 'done-tasks';
+                }
+            }
+
+            if (targetColumn) {
+                document.getElementById(targetColumn).appendChild(taskDiv);
+                updateArrowButtons(taskDiv);
+            }
         }
 
-        function allowDrop(event) {
-            event.preventDefault();
-        }
+        function updateArrowButtons(taskDiv) {
+            const currentColumn = taskDiv.parentElement.id;
+            const leftArrowButton = taskDiv.querySelector('.arrow-button:nth-child(1)');
+            const rightArrowButton = taskDiv.querySelector('.arrow-button:nth-child(3)');
 
-        function drop(event) {
-            event.preventDefault();
-            const id = event.dataTransfer.getData('text');
-            const draggableElement = document.getElementById(id);
-            const dropzone = event.target.closest('.tasks');
-            dropzone.appendChild(draggableElement);
+            if (currentColumn === 'todo-tasks') {
+                leftArrowButton.disabled = true;
+                rightArrowButton.disabled = false;
+            } else if (currentColumn === 'inprogress-tasks') {
+                leftArrowButton.disabled = false;
+                rightArrowButton.disabled = false;
+            } else if (currentColumn === 'done-tasks') {
+                leftArrowButton.disabled = false;
+                rightArrowButton.disabled = true;
+            }
         }
-
-        document.querySelectorAll('.tasks').forEach(column => {
-            column.ondragover = allowDrop;
-            column.ondrop = drop;
-        });
     </script>
 </body>
 </html>
