@@ -17,3 +17,14 @@ A simple todo app to manage your tasks.
 2. Enter a new todo in the input field and click "Add Todo".
 3. Use the "Complete" button to mark a todo as completed.
 4. Use the "Delete" button to remove a todo from the list.
+
+## Kanban Board
+kanban.html
+A kanban board to manage tasks in different stages.
+
+### Instructions
+1. Open `kanban.html` in your web browser.
+2. Add a new task by entering the task description in the input field under the desired column and clicking "Add".
+3. Edit a task by clicking on the task description, making changes, and pressing Enter.
+4. Delete a task by clicking the "Delete" button next to the task.
+5. Drag and drop tasks between columns to update their status.
