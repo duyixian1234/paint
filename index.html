@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Apps Collection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        header {
+            background-color: #343a40;
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+        
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card-image {
+            height: 160px;
+            background-size: cover;
+            background-position: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-content {
+            padding: 1.5rem;
+        }
+        
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            color: #343a40;
+        }
+        
+        .card p {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: #0069d9;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #343a40;
+            color: white;
+            margin-top: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .card {
+                width: 100%;
+            }
+            
+            .cards-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Web Apps Collection</h1>
+    </header>
+    
+    <div class="container">
+        <div class="cards-container">
+            <a href="paint.html" class="card-link">
+                <div class="card">
+                    <div class="card-image" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22160%22><rect width=%22300%22 height=%22160%22 fill=%22%23f1c40f%22/><text x=%22150%22 y=%2290%22 font-family=%22Arial%22 font-size=%2272%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22white%22>🎨</text></svg>')"></div>
+                    <div class="card-content">
+                        <h2>Paint App</h2>
+                        <p>A simple painting application that lets you draw and express your creativity.</p>
+                        <div class="btn">Open App</div>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="2048.html" class="card-link">
+                <div class="card">
+                    <div class="card-image" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22160%22><rect width=%22300%22 height=%22160%22 fill=%22%23e67e22%22/><text x=%22150%22 y=%2290%22 font-family=%22Arial%22 font-size=%2272%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22white%22>2048</text></svg>')"></div>
+                    <div class="card-content">
+                        <h2>2048 Game</h2>
+                        <p>Play the classic 2048 puzzle game. Combine tiles to reach the 2048 tile!</p>
+                        <div class="btn">Play Game</div>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="todo.html" class="card-link">
+                <div class="card">
+                    <div class="card-image" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22160%22><rect width=%22300%22 height=%22160%22 fill=%22%233498db%22/><text x=%22150%22 y=%2290%22 font-family=%22Arial%22 font-size=%2272%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22white%22>✓</text></svg>')"></div>
+                    <div class="card-content">
+                        <h2>Todo App</h2>
+                        <p>A simple todo application to help you manage your tasks and stay organized.</p>
+                        <div class="btn">Open App</div>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="kanban.html" class="card-link">
+                <div class="card">
+                    <div class="card-image" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22160%22><rect width=%22300%22 height=%22160%22 fill=%22%239b59b6%22/><text x=%22150%22 y=%2290%22 font-family=%22Arial%22 font-size=%2272%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22white%22>看板</text></svg>')"></div>
+                    <div class="card-content">
+                        <h2>Kanban Board</h2>
+                        <p>Organize tasks into different stages with this interactive Kanban board.</p>
+                        <div class="btn">Open Board</div>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="editor.html" class="card-link">
+                <div class="card">
+                    <div class="card-image" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22160%22><rect width=%22300%22 height=%22160%22 fill=%22%232ecc71%22/><text x=%22150%22 y=%2290%22 font-family=%22Arial%22 font-size=%2272%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22white%22>&lt;/&gt;</text></svg>')"></div>
+                    <div class="card-content">
+                        <h2>Code Editor</h2>
+                        <p>A CodePen-like editor for experimenting with HTML, CSS, and JavaScript.</p>
+                        <div class="btn">Open Editor</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2024 Web Apps Collection | All apps generated with AI</p>
+    </footer>
+</body>
+</html>
