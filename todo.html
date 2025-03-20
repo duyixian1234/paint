@@ -4,7 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
-    <link rel="stylesheet" href="styles/todo.css">
+    <style>
+        /* 在这里添加您的CSS样式 */
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        #todo-form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        #todo-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 10px 15px;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        #todo-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        #todo-list li {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4caf50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -15,6 +93,71 @@
         </form>
         <ul id="todo-list"></ul>
     </div>
-    <script src="todo.js"></script>
+    
+    <script>
+        // 获取DOM元素
+        const todoForm = document.getElementById('todo-form');
+        const todoInput = document.getElementById('todo-input');
+        const todoList = document.getElementById('todo-list');
+        
+        // 加载保存的待办事项
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTodos();
+        });
+        
+        // 提交表单添加新待办事项
+        todoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const todoText = todoInput.value.trim();
+            
+            if (todoText) {
+                addTodoToList(todoText);
+                saveTodos();
+                todoInput.value = '';
+            }
+        });
+        
+        // 添加待办事项到列表
+        function addTodoToList(todoText) {
+            const li = document.createElement('li');
+            
+            const span = document.createElement('span');
+            span.textContent = todoText;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.addEventListener('click', () => {
+                li.remove();
+                saveTodos();
+            });
+            
+            li.appendChild(span);
+            li.appendChild(deleteBtn);
+            
+            todoList.appendChild(li);
+        }
+        
+        // 保存待办事项到本地存储
+        function saveTodos() {
+            const todos = [];
+            
+            document.querySelectorAll('#todo-list li span').forEach(span => {
+                todos.push(span.textContent);
+            });
+            
+            localStorage.setItem('todos', JSON.stringify(todos));
+        }
+        
+        // 从本地存储加载待办事项
+        function loadTodos() {
+            const todos = JSON.parse(localStorage.getItem('todos')) || [];
+            
+            todos.forEach(todo => {
+                addTodoToList(todo);
+            });
+        }
+    </script>
 </body>
 </html>
