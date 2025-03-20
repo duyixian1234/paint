@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodePen Clone</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs/loader.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: #1e1e1e;
+            color: #fff;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: 50px 40px 1fr;
+            height: 100vh;
+            gap: 8px;
+            padding: 8px;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            background: #2d2d2d;
+            border-radius: 6px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .tabs {
+            grid-column: 1;
+            display: flex;
+            gap: 2px;
+            background: #2d2d2d;
+            padding: 4px;
+            border-radius: 6px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #1e1e1e;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: #3c3c3c;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #2a2a2a;
+            color: #aaa;
+        }
+
+        .editors-container {
+            grid-column: 1;
+            grid-row: 3;
+            background: #1e1e1e;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .editor-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s;
+        }
+
+        .editor-container.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .editor-label {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        #preview {
+            grid-column: 2;
+            grid-row: 2 / span 2;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">CodePen Clone</div>
+            <div class="actions">
+                <button onclick="runCode()">Run ▶</button>
+            </div>
+        </header>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('html')">HTML</button>
+            <button class="tab" onclick="switchTab('css')">CSS</button>
+            <button class="tab" onclick="switchTab('js')">JavaScript</button>
+        </div>
+        <div class="editors-container">
+            <div class="editor-container active" id="html-container">
+                <div class="editor-label">HTML</div>
+                <div id="html-editor" style="height: 100%"></div>
+            </div>
+            <div class="editor-container" id="css-container">
+                <div class="editor-label">CSS</div>
+                <div id="css-editor" style="height: 100%"></div>
+            </div>
+            <div class="editor-container" id="js-container">
+                <div class="editor-label">JavaScript</div>
+                <div id="js-editor" style="height: 100%"></div>
+            </div>
+        </div>
+        <div id="preview">
+            <iframe id="preview-frame"></iframe>
+        </div>
+    </div>
+
+    <script>
+        require.config({
+            paths: {
+                'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs'
+            }
+        });
+
+        let htmlEditor, cssEditor, jsEditor;
+
+        const defaultHTML = `<div class="container">
+    <h1>Welcome to CodePen Clone!</h1>
+    <p>Start editing to see your changes live.</p>
+</div>`;
+
+        const defaultCSS = `body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: system-ui;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.container {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    backdrop-filter: blur(10px);
+}
+
+h1 {
+    margin: 0;
+    font-size: 2.5rem;
+}
+
+p {
+    margin-top: 1rem;
+    opacity: 0.9;
+}`;
+
+        const defaultJS = `// Your JavaScript code here
+console.log('Welcome to CodePen Clone!');
+
+// Example: Add a click event to the heading
+document.querySelector('h1')?.addEventListener('click', () => {
+    alert('Hello from CodePen Clone!');
+});`;
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+                if (t.textContent.toLowerCase().startsWith(tab)) {
+                    t.classList.add('active');
+                }
+            });
+
+            // Update editor visibility
+            document.querySelectorAll('.editor-container').forEach(editor => {
+                editor.classList.remove('active');
+            });
+            document.getElementById(`${tab}-container`).classList.add('active');
+
+            // Trigger editor layout update
+            switch(tab) {
+                case 'html':
+                    htmlEditor.layout();
+                    break;
+                case 'css':
+                    cssEditor.layout();
+                    break;
+                case 'js':
+                    jsEditor.layout();
+                    break;
+            }
+        }
+
+        require(['vs/editor/editor.main'], function () {
+            // Create HTML editor
+            htmlEditor = monaco.editor.create(document.getElementById('html-editor'), {
+                value: defaultHTML,
+                language: 'html',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 14,
+                automaticLayout: true,
+                wordWrap: 'on',
+                scrollBeyondLastLine: false,
+                roundedSelection: false,
+                padding: { top: 16, bottom: 16 }
+            });
+
+            // Create CSS editor
+            cssEditor = monaco.editor.create(document.getElementById('css-editor'), {
+                value: defaultCSS,
+                language: 'css',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 14,
+                automaticLayout: true,
+                wordWrap: 'on',
+                scrollBeyondLastLine: false,
+                roundedSelection: false,
+                padding: { top: 16, bottom: 16 }
+            });
+
+            // Create JavaScript editor
+            jsEditor = monaco.editor.create(document.getElementById('js-editor'), {
+                value: defaultJS,
+                language: 'javascript',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 14,
+                automaticLayout: true,
+                wordWrap: 'on',
+                scrollBeyondLastLine: false,
+                roundedSelection: false,
+                padding: { top: 16, bottom: 16 }
+            });
+
+            // Run initial code
+            runCode();
+
+            // Set up auto-update for all editors
+            [htmlEditor, cssEditor, jsEditor].forEach(editor => {
+                editor.onDidChangeModelContent(() => {
+                    clearTimeout(window.timeout);
+                    window.timeout = setTimeout(runCode, 1000);
+                });
+            });
+        });
+
+        function runCode() {
+            const html = htmlEditor.getValue();
+            const css = cssEditor.getValue();
+            const js = jsEditor.getValue();
+
+            const combinedCode = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>${css}</style>
+                </head>
+                <body>
+                    ${html}
+                    <script>${js}<\/script>
+                </body>
+                </html>
+            `;
+
+            const previewFrame = document.getElementById('preview-frame');
+            const previewDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            
+            previewDoc.open();
+            previewDoc.write(combinedCode);
+            previewDoc.close();
+        }
+    </script>
+</body>
+</html>
