@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fractal Patterns</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background: #1a1a1a;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .controls {
+        width: 300px;
+        padding: 20px;
+        background: #2a2a2a;
+        border-radius: 10px;
+        margin-right: 20px;
+      }
+
+      .controls h2 {
+        margin-top: 0;
+        color: #4caf50;
+      }
+
+      .control-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        color: #ddd;
+      }
+
+      select,
+      input[type="range"] {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+
+      select {
+        padding: 8px;
+        background: #333;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 4px;
+      }
+
+      input[type="range"] {
+        background: #333;
+      }
+
+      input[type="number"] {
+        width: 100%;
+        padding: 8px;
+        background: #333;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 4px;
+        margin-bottom: 10px;
+      }
+
+      canvas {
+        background: #000;
+        border-radius: 10px;
+      }
+
+      .color-scheme {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .color-option {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+      }
+
+      .color-option.active {
+        border-color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="controls">
+      <h2>Fractal Controls</h2>
+
+      <div class="control-group">
+        <label>Fractal Type</label>
+        <select id="fractalType">
+          <option value="mandelbrot">Mandelbrot Set</option>
+          <option value="julia">Julia Set</option>
+          <option value="sierpinski">Sierpinski Triangle</option>
+          <option value="koch">Koch Snowflake</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Max Iterations</label>
+        <input type="number" id="iterations" value="100" />
+      </div>
+
+      <div class="control-group">
+        <label>Zoom Level</label>
+        <input type="number" id="zoom" min="0.1" max="2" step="0.1" value="1" />
+      </div>
+
+      <div class="control-group">
+        <label>Color Scheme</label>
+        <div class="color-scheme">
+          <div
+            class="color-option active"
+            style="
+              background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff);
+            "
+            data-scheme="rainbow"
+          ></div>
+          <div
+            class="color-option"
+            style="background: linear-gradient(45deg, #000000, #ffffff)"
+            data-scheme="grayscale"
+          ></div>
+          <div
+            class="color-option"
+            style="background: linear-gradient(45deg, #ff0066, #9900cc)"
+            data-scheme="purple"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <canvas id="fractalCanvas"></canvas>
+
+    <script>
+      const canvas = document.getElementById("fractalCanvas");
+      const ctx = canvas.getContext("2d");
+      const fractalType = document.getElementById("fractalType");
+      const iterations = document.getElementById("iterations");
+      const zoom = document.getElementById("zoom");
+      let colorScheme = "rainbow";
+
+      // 为不同分形类型定义迭代设置
+      const iterationSettings = {
+        mandelbrot: { min: 50, max: 1000, value: 100, step: 10 },
+        julia: { min: 50, max: 1000, value: 100, step: 10 },
+        sierpinski: { min: 1, max: 7, value: 5, step: 1 },
+        koch: { min: 1, max: 5, value: 3, step: 1 },
+      };
+
+      // 更新迭代控制器设置
+      function updateIterationControls() {
+        const settings = iterationSettings[fractalType.value];
+        iterations.min = settings.min;
+        iterations.max = settings.max;
+        iterations.value = settings.value;
+        iterations.step = settings.step;
+      }
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth - 360;
+        canvas.height = window.innerHeight - 40;
+        drawFractal();
+      }
+
+      function drawMandelbrot() {
+        const maxIter = parseInt(iterations.value);
+        const zoomLevel = parseFloat(zoom.value);
+        const imageData = ctx.createImageData(canvas.width, canvas.height);
+
+        for (let x = 0; x < canvas.width; x++) {
+          for (let y = 0; y < canvas.height; y++) {
+            let a = ((x - canvas.width / 2) * (4 / canvas.width)) / zoomLevel;
+            let b = ((y - canvas.height / 2) * (4 / canvas.height)) / zoomLevel;
+            let ca = a;
+            let cb = b;
+            let n = 0;
+
+            while (n < maxIter) {
+              const aa = a * a - b * b;
+              const bb = 2 * a * b;
+              if (aa + bb > 4) break;
+              a = aa + ca;
+              b = bb + cb;
+              n++;
+            }
+
+            const pixel = (x + y * canvas.width) * 4;
+            const color = getColor(n, maxIter);
+            imageData.data[pixel] = color.r;
+            imageData.data[pixel + 1] = color.g;
+            imageData.data[pixel + 2] = color.b;
+            imageData.data[pixel + 3] = 255;
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+      }
+
+      function drawJulia() {
+        const maxIter = parseInt(iterations.value);
+        const zoomLevel = parseFloat(zoom.value);
+        const imageData = ctx.createImageData(canvas.width, canvas.height);
+        const cx = -0.4; // Julia Set 常量
+        const cy = 0.6;
+
+        for (let x = 0; x < canvas.width; x++) {
+          for (let y = 0; y < canvas.height; y++) {
+            let a = ((x - canvas.width / 2) * (4 / canvas.width)) / zoomLevel;
+            let b = ((y - canvas.height / 2) * (4 / canvas.height)) / zoomLevel;
+            let n = 0;
+
+            while (n < maxIter && a * a + b * b < 4) {
+              const aa = a * a - b * b + cx;
+              const bb = 2 * a * b + cy;
+              a = aa;
+              b = bb;
+              n++;
+            }
+
+            const pixel = (x + y * canvas.width) * 4;
+            const color = getColor(n, maxIter);
+            imageData.data[pixel] = color.r;
+            imageData.data[pixel + 1] = color.g;
+            imageData.data[pixel + 2] = color.b;
+            imageData.data[pixel + 3] = 255;
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+      }
+
+      function drawSierpinski() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const depth = parseInt(document.getElementById("iterations").value);
+        const size =
+          Math.min(canvas.width, canvas.height) * parseFloat(zoom.value);
+        const startX = (canvas.width - size) / 2;
+        const startY = (canvas.height + size * 0.866) / 2;
+
+        const stack = [{ x: startX, y: startY, size: size, depth: depth }];
+
+        while (stack.length > 0) {
+          const { x, y, size, depth } = stack.pop();
+
+          if (depth === 0) {
+            drawTriangle(x, y, size);
+            continue;
+          }
+
+          const newSize = size / 2;
+          const h = newSize * 0.866;
+
+          stack.push({ x: x, y: y, size: newSize, depth: depth - 1 });
+          stack.push({ x: x + newSize, y: y, size: newSize, depth: depth - 1 });
+          stack.push({
+            x: x + newSize / 2,
+            y: y - h,
+            size: newSize,
+            depth: depth - 1,
+          });
+        }
+      }
+
+      function drawKoch() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const depth = Math.min(
+          parseInt(document.getElementById("iterations").value),
+          5
+        );
+        const size =
+          Math.min(canvas.width, canvas.height) * 0.6 * parseFloat(zoom.value);
+        const startX = (canvas.width - size) / 2;
+        const startY = (canvas.height - (size * Math.sqrt(3)) / 2) / 2;
+        const height = (size * Math.sqrt(3)) / 2;
+
+        // Set line style
+        if (colorScheme === "rainbow") {
+          ctx.strokeStyle = "#00ff00";
+        } else if (colorScheme === "grayscale") {
+          ctx.strokeStyle = "#ffffff";
+        } else {
+          ctx.strokeStyle = "#ff0066";
+        }
+        ctx.lineWidth = 2;
+
+        const stack = [
+          {
+            x1: startX,
+            y1: startY + height,
+            x2: startX + size,
+            y2: startY + height,
+            depth,
+          },
+          {
+            x1: startX + size,
+            y1: startY + height,
+            x2: startX + size / 2,
+            y2: startY,
+            depth,
+          },
+          {
+            x1: startX + size / 2,
+            y1: startY,
+            x2: startX,
+            y2: startY + height,
+            depth,
+          },
+        ];
+
+        while (stack.length > 0) {
+          const { x1, y1, x2, y2, depth } = stack.pop();
+
+          if (depth === 0) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            continue;
+          }
+
+          const dx = x2 - x1;
+          const dy = y2 - y1;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const unit = dist / 3;
+          const angle = Math.atan2(dy, dx);
+
+          const p2 = { x: x1 + dx / 3, y: y1 + dy / 3 };
+          const p3 = {
+            x: x1 + dx / 2 + Math.cos(angle - Math.PI / 3) * unit,
+            y: y1 + dy / 2 + Math.sin(angle - Math.PI / 3) * unit,
+          };
+          const p4 = { x: x1 + (2 * dx) / 3, y: y1 + (2 * dy) / 3 };
+
+          stack.push({ x1: p4.x, y1: p4.y, x2, y2, depth: depth - 1 });
+          stack.push({
+            x1: p3.x,
+            y1: p3.y,
+            x2: p4.x,
+            y2: p4.y,
+            depth: depth - 1,
+          });
+          stack.push({
+            x1: p2.x,
+            y1: p2.y,
+            x2: p3.x,
+            y2: p3.y,
+            depth: depth - 1,
+          });
+          stack.push({ x1, y1, x2: p2.x, y2: p2.y, depth: depth - 1 });
+        }
+      }
+
+      function getColor(n, maxIter) {
+        if (n === maxIter) return { r: 0, g: 0, b: 0 };
+
+        switch (colorScheme) {
+          case "rainbow":
+            const hue = (n / maxIter) * 360;
+            return hslToRgb(hue, 1, 0.5);
+          case "grayscale":
+            const v = (n / maxIter) * 255;
+            return { r: v, g: v, b: v };
+          case "purple":
+            return {
+              r: Math.floor((n / maxIter) * 255),
+              g: 0,
+              b: Math.floor((n / maxIter) * 200),
+            };
+        }
+      }
+
+      function hslToRgb(h, s, l) {
+        let r, g, b;
+        if (s === 0) {
+          r = g = b = l;
+        } else {
+          const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+          };
+
+          const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+          const p = 2 * l - q;
+          r = hue2rgb(p, q, (h + 1 / 3) / 360);
+          g = hue2rgb(p, q, h / 360);
+          b = hue2rgb(p, q, (h - 1 / 3) / 360);
+        }
+
+        return {
+          r: Math.round(r * 255),
+          g: Math.round(g * 255),
+          b: Math.round(b * 255),
+        };
+      }
+
+      function drawTriangle(x, y, size) {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + size, y);
+        ctx.lineTo(x + size / 2, y - size * 0.866);
+        ctx.closePath();
+
+        if (colorScheme === "rainbow") {
+          ctx.fillStyle = "#00ff00";
+        } else if (colorScheme === "grayscale") {
+          ctx.fillStyle = "#ffffff";
+        } else {
+          ctx.fillStyle = "#ff0066";
+        }
+
+        ctx.fill();
+      }
+
+      function drawFractal() {
+        switch (fractalType.value) {
+          case "mandelbrot":
+            drawMandelbrot();
+            break;
+          case "julia":
+            drawJulia();
+            break;
+          case "sierpinski":
+            drawSierpinski();
+            break;
+          case "koch":
+            drawKoch();
+            break;
+        }
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+      fractalType.addEventListener("change", () => {
+        updateIterationControls();
+        drawFractal();
+      });
+      iterations.addEventListener("input", drawFractal);
+      zoom.addEventListener("input", drawFractal);
+
+      document.querySelectorAll(".color-option").forEach((option) => {
+        option.addEventListener("click", (e) => {
+          document
+            .querySelector(".color-option.active")
+            .classList.remove("active");
+          e.target.classList.add("active");
+          colorScheme = e.target.dataset.scheme;
+          drawFractal();
+        });
+      });
+
+      // 初始化设置
+      updateIterationControls();
+      resizeCanvas();
+    </script>
+  </body>
+</html>
