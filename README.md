@@ -21,3 +21,8 @@ A kanban board to manage tasks in different stages.
 
 editor.html
 A codepen copy.
+
+## Fractals
+
+fractal.html
+Generate fractals.
