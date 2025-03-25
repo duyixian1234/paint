@@ -26,3 +26,8 @@ A codepen copy.
 
 fractal.html
 Generate fractals.
+
+## Weather App
+
+weather.html
+Check weather conditions for any location.
