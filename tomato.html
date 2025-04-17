@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>番茄钟</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        #timer {
+            font-size: 64px;
+            margin-bottom: 30px;
+            color: #555;
+        }
+
+        .buttons button {
+            padding: 12px 24px;
+            margin: 5px 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #startBtn {
+            background-color: #28a745;
+            color: #fff;
+        }
+
+        #startBtn:hover {
+            background-color: #218838;
+        }
+
+        #resetBtn {
+            background-color: #dc3545;
+            color: #fff;
+        }
+
+        #resetBtn:hover {
+            background-color: #c82333;
+        }
+
+        #settingsBtn {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        #settingsBtn:hover {
+            background-color: #0056b3;
+        }
+
+        .settings {
+            margin-top: 20px;
+        }
+
+        .settings label {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .settings input {
+            padding: 5px 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>番茄钟</h1>
+    <div id="timer">25:00</div>
+    <div class="buttons">
+        <button id="startBtn">开始</button>
+        <button id="resetBtn">重置</button>
+        <button id="settingsBtn">设置</button>
+    </div>
+    <div class="settings" id="settings" style="display: none;">
+        <label for="workTime">工作时间（分钟）：</label>
+        <input type="number" id="workTime" value="25" min="1">
+        <label for="breakTime">休息时间（分钟）：</label>
+        <input type="number" id="breakTime" value="5" min="1">
+        <button id="saveSettings">保存</button>
+    </div>
+</div>
+
+<script>
+    let workTime = 25 * 60; // 默认工作时间25分钟
+    let breakTime = 5 * 60; // 默认休息时间5分钟
+    let timer;
+    let isWorking = true;
+    let timeLeft = workTime;
+    const timerDisplay = document.getElementById('timer');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settings = document.getElementById('settings');
+    const workTimeInput = document.getElementById('workTime');
+    const breakTimeInput = document.getElementById('breakTime');
+    const saveSettingsBtn = document.getElementById('saveSettings');
+
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+        if (timeLeft > 0) {
+            timeLeft--;
+        } else {
+            clearInterval(timer);
+            if (isWorking) {
+                alert('工作时间结束，开始休息！');
+                isWorking = false;
+                timeLeft = breakTime;
+                timer = setInterval(updateTimer, 1000);
+            } else {
+                alert('休息时间结束，开始工作！');
+                isWorking = true;
+                timeLeft = workTime;
+                timer = setInterval(updateTimer, 1000);
+            }
+        }
+    }
+
+    startBtn.addEventListener('click', () => {
+        if (!timer) {
+            timer = setInterval(updateTimer, 1000);
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        clearInterval(timer);
+        timer = null;
+        isWorking = true;
+        timeLeft = workTime;
+        timerDisplay.textContent = formatTime(timeLeft);
+    });
+
+    settingsBtn.addEventListener('click', () => {
+        settings.style.display = settings.style.display === 'none' ? 'block' : 'none';
+    });
+
+    saveSettingsBtn.addEventListener('click', () => {
+        const newWorkTime = parseInt(workTimeInput.value) * 60;
+        const newBreakTime = parseInt(breakTimeInput.value) * 60;
+
+        if (!isNaN(newWorkTime) && newWorkTime > 0) {
+            workTime = newWorkTime;
+        }
+        if (!isNaN(newBreakTime) && newBreakTime > 0) {
+            breakTime = newBreakTime;
+        }
+
+        // 重置计时器以应用新设置
+        clearInterval(timer);
+        timer = null;
+        isWorking = true;
+        timeLeft = workTime;
+        timerDisplay.textContent = formatTime(timeLeft);
+        settings.style.display = 'none';
+    });
+</script>
+
+</body>
+</html>

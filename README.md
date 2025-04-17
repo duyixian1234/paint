@@ -16,7 +16,6 @@ A simple todo app to manage your tasks.
 kanban.html
 A kanban board to manage tasks in different stages.
 
-
 ## Editor
 
 editor.html
@@ -31,3 +30,13 @@ Generate fractals.
 
 weather.html
 Check weather conditions for any location.
+
+## Tomato Timer
+
+tomato.html
+A Pomodoro technique timer to help you focus and manage your time.
+
+## Snake Game
+
+snake.html
+A classic snake game for entertainment.
