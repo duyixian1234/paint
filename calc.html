@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>卡西欧计算器模拟</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f5f5f5;
+        font-family: Arial, sans-serif;
+      }
+
+      .calculator {
+        width: 280px;
+        background-color: #222;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .brand {
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .model {
+        font-size: 12px;
+        color: #ccc;
+      }
+
+      .screen {
+        background-color: #c9d8c7;
+        margin: 10px 0;
+        padding: 10px;
+        text-align: right;
+        font-size: 24px;
+        min-height: 40px;
+        border-radius: 5px;
+      }
+
+      .buttons {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-gap: 8px;
+      }
+
+      button {
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 15px 5px;
+        font-size: 18px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      button:hover {
+        background-color: #444;
+      }
+
+      button:active {
+        transform: scale(0.95);
+      }
+
+      .orange {
+        background-color: #e67e22;
+      }
+
+      .orange:hover {
+        background-color: #f39c12;
+      }
+
+      .zero {
+        grid-column: 1;
+      }
+
+      .double-zero {
+        grid-column: 2;
+      }
+
+      .decimal {
+        grid-column: 3;
+      }
+
+      .equals {
+        grid-column: 4;
+      }
+
+      .plus {
+        grid-column: 5;
+        grid-row: 4 / 6;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="calculator">
+      <div class="brand">
+        <span>CASIO</span>
+        <span class="model">MX-120B 12 DIGITS</span>
+      </div>
+      <div class="screen" id="display">0</div>
+      <div class="buttons">
+        <button id="mc">MC</button>
+        <button id="mr">MR</button>
+        <button id="m-minus">M-</button>
+        <button id="m-plus">M+</button>
+        <button id="divide">÷</button>
+
+        <button id="percent">%</button>
+        <button id="seven">7</button>
+        <button id="eight">8</button>
+        <button id="nine">9</button>
+        <button id="multiply">×</button>
+
+        <button id="sqrt">√</button>
+        <button id="four">4</button>
+        <button id="five">5</button>
+        <button id="six">6</button>
+        <button id="subtract">−</button>
+
+        <button class="orange" id="clear">C/AC</button>
+        <button id="one">1</button>
+        <button id="two">2</button>
+        <button id="three">3</button>
+        <button id="plus" class="plus">+</button>
+
+        <button id="zero" class="zero">0</button>
+        <button id="double-zero" class="double-zero">00</button>
+        <button id="decimal" class="decimal">.</button>
+        <button id="equals" class="equals">=</button>
+      </div>
+    </div>
+
+    <script>
+      // 计算器状态
+      let currentInput = "0"; // 当前输入
+      let previousInput = "0"; // 上一次输入
+      let operation = null; // 当前操作
+      let memory = 0; // 内存
+      let resetInput = true; // 是否需要重置输入
+
+      // 获取显示屏元素
+      const display = document.getElementById("display");
+
+      // 更新显示屏
+      function updateDisplay() {
+        display.textContent = currentInput;
+      }
+
+      // 数字按钮点击处理
+      function handleNumberClick(number) {
+        if (resetInput) {
+          currentInput = number;
+          resetInput = false;
+        } else {
+          // 防止多个零开头
+          if (currentInput === "0" && number === "0") return;
+
+          // 防止数字太长
+          if (currentInput.length >= 12) return;
+
+          // 处理开头为零的情况
+          if (currentInput === "0" && number !== ".") {
+            currentInput = number;
+          } else {
+            currentInput += number;
+          }
+        }
+        updateDisplay();
+      }
+
+      // 操作按钮点击处理
+      function handleOperationClick(op) {
+        // 如果有未完成的操作，先计算结果
+        if (operation && !resetInput) {
+          calculate();
+        }
+
+        previousInput = currentInput;
+        operation = op;
+        resetInput = true;
+      }
+
+      // 计算结果
+      function calculate() {
+        let result = 0;
+        const prev = parseFloat(previousInput);
+        const current = parseFloat(currentInput);
+
+        switch (operation) {
+          case "+":
+            result = prev + current;
+            break;
+          case "-":
+            result = prev - current;
+            break;
+          case "*":
+            result = prev * current;
+            break;
+          case "/":
+            result = prev / current;
+            break;
+          case "%":
+            result = prev * (current / 100);
+            break;
+        }
+
+        // 处理结果，保证不超过12位数字
+        currentInput = result.toString().substring(0, 12);
+        operation = null;
+        resetInput = true;
+        updateDisplay();
+      }
+
+      // 清除输入
+      function clearInput() {
+        currentInput = "0";
+        resetInput = true;
+        updateDisplay();
+      }
+
+      // 全部清除
+      function clearAll() {
+        currentInput = "0";
+        previousInput = "0";
+        operation = null;
+        resetInput = true;
+        updateDisplay();
+      }
+
+      // 设置事件监听器
+      document
+        .getElementById("one")
+        .addEventListener("click", () => handleNumberClick("1"));
+      document
+        .getElementById("two")
+        .addEventListener("click", () => handleNumberClick("2"));
+      document
+        .getElementById("three")
+        .addEventListener("click", () => handleNumberClick("3"));
+      document
+        .getElementById("four")
+        .addEventListener("click", () => handleNumberClick("4"));
+      document
+        .getElementById("five")
+        .addEventListener("click", () => handleNumberClick("5"));
+      document
+        .getElementById("six")
+        .addEventListener("click", () => handleNumberClick("6"));
+      document
+        .getElementById("seven")
+        .addEventListener("click", () => handleNumberClick("7"));
+      document
+        .getElementById("eight")
+        .addEventListener("click", () => handleNumberClick("8"));
+      document
+        .getElementById("nine")
+        .addEventListener("click", () => handleNumberClick("9"));
+      document
+        .getElementById("zero")
+        .addEventListener("click", () => handleNumberClick("0"));
+      document
+        .getElementById("double-zero")
+        .addEventListener("click", () => handleNumberClick("00"));
+      document
+        .getElementById("decimal")
+        .addEventListener("click", () => handleNumberClick("."));
+
+      document
+        .getElementById("plus")
+        .addEventListener("click", () => handleOperationClick("+"));
+      document
+        .getElementById("subtract")
+        .addEventListener("click", () => handleOperationClick("-"));
+      document
+        .getElementById("multiply")
+        .addEventListener("click", () => handleOperationClick("*"));
+      document
+        .getElementById("divide")
+        .addEventListener("click", () => handleOperationClick("/"));
+      document
+        .getElementById("percent")
+        .addEventListener("click", () => handleOperationClick("%"));
+
+      document.getElementById("equals").addEventListener("click", calculate);
+
+      // 内存相关功能
+      document.getElementById("mc").addEventListener("click", () => {
+        memory = 0;
+      });
+
+      document.getElementById("mr").addEventListener("click", () => {
+        currentInput = memory.toString();
+        resetInput = true;
+        updateDisplay();
+      });
+
+      document.getElementById("m-plus").addEventListener("click", () => {
+        memory += parseFloat(currentInput);
+      });
+
+      document.getElementById("m-minus").addEventListener("click", () => {
+        memory -= parseFloat(currentInput);
+      });
+
+      // 平方根功能
+      document.getElementById("sqrt").addEventListener("click", () => {
+        currentInput = Math.sqrt(parseFloat(currentInput))
+          .toString()
+          .substring(0, 12);
+        resetInput = true;
+        updateDisplay();
+      });
+
+      // 清除功能
+      let clearCount = 0;
+      let clearTimeout;
+
+      document.getElementById("clear").addEventListener("click", () => {
+        clearTimeout && clearTimeout(clearTimeout);
+
+        if (clearCount === 0) {
+          clearInput();
+          clearCount = 1;
+
+          clearTimeout = setTimeout(() => {
+            clearCount = 0;
+          }, 300);
+        } else {
+          clearAll();
+          clearCount = 0;
+        }
+      });
+
+      // 初始化显示
+      updateDisplay();
+    </script>
+  </body>
+</html>
