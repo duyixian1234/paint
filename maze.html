@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>迷宫生成与A*寻路可视化</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+      }
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        min-width: 200px;
+      }
+      label {
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      select,
+      button {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+      .canvas-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+      }
+      canvas {
+        border: 1px solid #ddd;
+        background-color: white;
+      }
+      .stats {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>迷宫生成与A*寻路可视化</h1>
+
+      <div class="controls">
+        <div class="control-group">
+          <label for="mazeSize">迷宫尺寸:</label>
+          <select id="mazeSize">
+            <option value="20">20x20</option>
+            <option value="40">40x40</option>
+            <option value="60">60x60</option>
+            <option value="80">80x80</option>
+            <option value="100">100x100</option>
+            <option value="120">120x120</option>
+            <option value="140">140x140</option>
+            <option value="160">160x160</option>
+            <option value="180">180x180</option>
+            <option value="200">200x200</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="algorithm">寻路方向:</label>
+          <select id="algorithm">
+            <option value="start">从起点开始</option>
+            <option value="end">从终点开始</option>
+            <option value="bidirectional">双向寻路</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="speed">动画速度:</label>
+          <select id="speed">
+            <option value="10">慢速</option>
+            <option value="30" selected>中速</option>
+            <option value="50">快速</option>
+            <option value="0">无动画</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>&nbsp;</label>
+          <button id="generateMaze">生成迷宫</button>
+        </div>
+
+        <div class="control-group">
+          <label>&nbsp;</label>
+          <button id="findPath" disabled>开始寻路</button>
+        </div>
+
+        <div class="control-group">
+          <label>&nbsp;</label>
+          <button id="reset">重置</button>
+        </div>
+      </div>
+
+      <div class="canvas-container">
+        <canvas id="mazeCanvas"></canvas>
+      </div>
+
+      <div class="stats">
+        <p>状态: <span id="status">准备生成迷宫</span></p>
+        <p>路径长度: <span id="pathLength">-</span></p>
+        <p>已探索节点: <span id="exploredNodes">0</span></p>
+        <p>计算时间: <span id="computeTime">0</span> ms</p>
+      </div>
+    </div>
+
+    <script>
+      // 全局变量
+      const canvas = document.getElementById("mazeCanvas");
+      const ctx = canvas.getContext("2d");
+      let maze = [];
+      let path = [];
+      let exploredCells = new Set();
+      let animationId = null;
+      let cellSize = 0;
+      let mazeSize = 20;
+      let start = { x: 0, y: 0 };
+      let end = { x: 0, y: 0 };
+      let isFindingPath = false;
+
+      // 颜色定义
+      const colors = {
+        wall: "#333",
+        path: "#4CAF50",
+        start: "#FF5722",
+        end: "#2196F3",
+        explored: "#FFECB3",
+        frontier: "#FFC107",
+        current: "#FF9800",
+        bidirectionalStart: "#E91E63",
+        bidirectionalEnd: "#3F51B5",
+      };
+
+      // 初始化
+      function init() {
+        mazeSize = parseInt(document.getElementById("mazeSize").value);
+        cellSize = Math.min(20, Math.floor(800 / mazeSize));
+        canvas.width = mazeSize * cellSize;
+        canvas.height = mazeSize * cellSize;
+
+        document
+          .getElementById("generateMaze")
+          .addEventListener("click", generateMaze);
+        document.getElementById("findPath").addEventListener("click", findPath);
+        document.getElementById("reset").addEventListener("click", reset);
+
+        updateStatus("准备生成迷宫");
+      }
+
+      // 生成迷宫
+      function generateMaze() {
+        if (isFindingPath) return;
+
+        reset();
+        mazeSize = parseInt(document.getElementById("mazeSize").value);
+        cellSize = Math.min(20, Math.floor(800 / mazeSize));
+        canvas.width = mazeSize * cellSize;
+        canvas.height = mazeSize * cellSize;
+
+        // 初始化迷宫 (所有都是墙)
+        maze = Array(mazeSize)
+          .fill()
+          .map(() => Array(mazeSize).fill(1));
+
+        // 使用深度优先搜索生成迷宫
+        start = { x: 1, y: 1 };
+        end = { x: mazeSize - 3, y: mazeSize - 3 };
+
+        carvePassage(start.x, start.y);
+
+        // 确保起点和终点是通路
+        maze[start.x][start.y] = 0;
+        maze[end.x][end.y] = 0;
+
+        // 绘制迷宫
+        drawMaze();
+
+        document.getElementById("findPath").disabled = false;
+        updateStatus("迷宫已生成，准备寻路");
+      }
+
+      // 递归回溯算法生成迷宫
+      function carvePassage(x, y) {
+        maze[x][y] = 0;
+
+        // 随机方向顺序
+        const directions = shuffleArray([
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ]);
+
+        for (const [dx, dy] of directions) {
+          const nx = x + dx * 2;
+          const ny = y + dy * 2;
+
+          if (
+            nx > 0 &&
+            nx < mazeSize - 1 &&
+            ny > 0 &&
+            ny < mazeSize - 1 &&
+            maze[nx][ny] === 1
+          ) {
+            maze[x + dx][y + dy] = 0;
+            carvePassage(nx, ny);
+          }
+        }
+      }
+
+      // 随机打乱数组
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      // 绘制迷宫
+      function drawMaze() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let x = 0; x < mazeSize; x++) {
+          for (let y = 0; y < mazeSize; y++) {
+            if (maze[x][y] === 1) {
+              ctx.fillStyle = colors.wall;
+              ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+            } else if (x === start.x && y === start.y) {
+              ctx.fillStyle = colors.start;
+              ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+            } else if (x === end.x && y === end.y) {
+              ctx.fillStyle = colors.end;
+              ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+            } else if (path.some((p) => p.x === x && p.y === y)) {
+              ctx.fillStyle = colors.path;
+              ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+            } else if (exploredCells.has(`${x},${y}`)) {
+              ctx.fillStyle = colors.explored;
+              ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+            }
+          }
+        }
+      }
+
+      // A*寻路算法
+      function findPath() {
+        if (isFindingPath) return;
+
+        isFindingPath = true;
+        document.getElementById("findPath").disabled = true;
+        document.getElementById("generateMaze").disabled = true;
+
+        const algorithm = document.getElementById("algorithm").value;
+        const speed = parseInt(document.getElementById("speed").value);
+
+        path = [];
+        exploredCells = new Set();
+        updateStatus("正在寻路...");
+
+        const startTime = performance.now();
+
+        if (algorithm === "bidirectional") {
+          bidirectionalAStar(start, end, speed);
+        } else {
+          const fromStart = algorithm === "start";
+          const startNode = fromStart ? start : end;
+          const endNode = fromStart ? end : start;
+
+          aStar(startNode, endNode, speed, fromStart);
+        }
+
+        const endTime = performance.now();
+        document.getElementById("computeTime").textContent = Math.round(
+          endTime - startTime
+        );
+      }
+
+      // A*算法实现
+      function aStar(startNode, endNode, speed, fromStart = true) {
+        const openSet = [startNode];
+        const cameFrom = {};
+        const gScore = {};
+        const fScore = {};
+
+        // 初始化分数
+        for (let x = 0; x < mazeSize; x++) {
+          for (let y = 0; y < mazeSize; y++) {
+            gScore[`${x},${y}`] = Infinity;
+            fScore[`${x},${y}`] = Infinity;
+          }
+        }
+
+        gScore[`${startNode.x},${startNode.y}`] = 0;
+        fScore[`${startNode.x},${startNode.y}`] = heuristic(startNode, endNode);
+
+        let current;
+        let found = false;
+
+        function step() {
+          if (openSet.length === 0) {
+            updateStatus("找不到路径");
+            isFindingPath = false;
+            document.getElementById("generateMaze").disabled = false;
+            return;
+          }
+
+          // 找到fScore最小的节点
+          openSet.sort(
+            (a, b) => fScore[`${a.x},${a.y}`] - fScore[`${b.x},${b.y}`]
+          );
+          current = openSet.shift();
+
+          // 检查是否到达终点
+          if (current.x === endNode.x && current.y === endNode.y) {
+            reconstructPath(cameFrom, current, fromStart);
+            found = true;
+            updateStatus("找到路径!");
+            isFindingPath = false;
+            document.getElementById("generateMaze").disabled = false;
+            return;
+          }
+
+          // 标记为已探索
+          exploredCells.add(`${current.x},${current.y}`);
+          document.getElementById("exploredNodes").textContent =
+            exploredCells.size;
+
+          // 绘制当前状态
+          drawMaze();
+
+          // 绘制当前节点
+          ctx.fillStyle = fromStart ? colors.current : colors.bidirectionalEnd;
+          ctx.fillRect(
+            current.x * cellSize,
+            current.y * cellSize,
+            cellSize,
+            cellSize
+          );
+
+          // 检查邻居
+          const neighbors = getNeighbors(current);
+
+          for (const neighbor of neighbors) {
+            const tentativeGScore = gScore[`${current.x},${current.y}`] + 1;
+
+            if (tentativeGScore < gScore[`${neighbor.x},${neighbor.y}`]) {
+              cameFrom[`${neighbor.x},${neighbor.y}`] = current;
+              gScore[`${neighbor.x},${neighbor.y}`] = tentativeGScore;
+              fScore[`${neighbor.x},${neighbor.y}`] =
+                tentativeGScore + heuristic(neighbor, endNode);
+
+              if (
+                !openSet.some((n) => n.x === neighbor.x && n.y === neighbor.y)
+              ) {
+                openSet.push(neighbor);
+              }
+            }
+          }
+
+          if (speed > 0 && !found) {
+            animationId = requestAnimationFrame(step);
+          } else if (!found) {
+            step();
+          }
+        }
+
+        if (speed > 0) {
+          animationId = requestAnimationFrame(step);
+        } else {
+          while (!found && openSet.length > 0) {
+            step();
+          }
+        }
+      }
+
+      // 双向A*算法
+      function bidirectionalAStar(startNode, endNode, speed) {
+        const openSetStart = [startNode];
+        const openSetEnd = [endNode];
+        const cameFromStart = {};
+        const cameFromEnd = {};
+        const gScoreStart = {};
+        const gScoreEnd = {};
+        const fScoreStart = {};
+        const fScoreEnd = {};
+
+        // 初始化分数
+        for (let x = 0; x < mazeSize; x++) {
+          for (let y = 0; y < mazeSize; y++) {
+            gScoreStart[`${x},${y}`] = Infinity;
+            gScoreEnd[`${x},${y}`] = Infinity;
+            fScoreStart[`${x},${y}`] = Infinity;
+            fScoreEnd[`${x},${y}`] = Infinity;
+          }
+        }
+
+        gScoreStart[`${startNode.x},${startNode.y}`] = 0;
+        fScoreStart[`${startNode.x},${startNode.y}`] = heuristic(
+          startNode,
+          endNode
+        );
+        gScoreEnd[`${endNode.x},${endNode.y}`] = 0;
+        fScoreEnd[`${endNode.x},${endNode.y}`] = heuristic(endNode, startNode);
+
+        let currentStart, currentEnd;
+        let meetingPoint = null;
+        let found = false;
+
+        function step() {
+          if (openSetStart.length === 0 || openSetEnd.length === 0) {
+            updateStatus("找不到路径");
+            isFindingPath = false;
+            document.getElementById("generateMaze").disabled = false;
+            return;
+          }
+
+          // 从起点开始的搜索
+          openSetStart.sort(
+            (a, b) =>
+              fScoreStart[`${a.x},${a.y}`] - fScoreStart[`${b.x},${b.y}`]
+          );
+          currentStart = openSetStart.shift();
+
+          // 从终点开始的搜索
+          openSetEnd.sort(
+            (a, b) => fScoreEnd[`${a.x},${a.y}`] - fScoreEnd[`${b.x},${b.y}`]
+          );
+          currentEnd = openSetEnd.shift();
+
+          // 检查是否相遇
+          const startClosed = exploredCells.has(
+            `${currentStart.x},${currentStart.y}`
+          );
+          const endClosed = exploredCells.has(
+            `${currentEnd.x},${currentEnd.y}`
+          );
+
+          if (startClosed || endClosed) {
+            meetingPoint = startClosed ? currentStart : currentEnd;
+            reconstructBidirectionalPath(
+              cameFromStart,
+              cameFromEnd,
+              meetingPoint
+            );
+            found = true;
+            updateStatus("找到路径!");
+            isFindingPath = false;
+            document.getElementById("generateMaze").disabled = false;
+            return;
+          }
+
+          // 标记为已探索
+          exploredCells.add(`${currentStart.x},${currentStart.y}`);
+          exploredCells.add(`${currentEnd.x},${currentEnd.y}`);
+          document.getElementById("exploredNodes").textContent =
+            exploredCells.size;
+
+          // 绘制当前状态
+          drawMaze();
+
+          // 绘制当前节点
+          ctx.fillStyle = colors.bidirectionalStart;
+          ctx.fillRect(
+            currentStart.x * cellSize,
+            currentStart.y * cellSize,
+            cellSize,
+            cellSize
+          );
+          ctx.fillStyle = colors.bidirectionalEnd;
+          ctx.fillRect(
+            currentEnd.x * cellSize,
+            currentEnd.y * cellSize,
+            cellSize,
+            cellSize
+          );
+
+          // 处理起点搜索的邻居
+          const neighborsStart = getNeighbors(currentStart);
+          for (const neighbor of neighborsStart) {
+            const tentativeGScore =
+              gScoreStart[`${currentStart.x},${currentStart.y}`] + 1;
+
+            if (tentativeGScore < gScoreStart[`${neighbor.x},${neighbor.y}`]) {
+              cameFromStart[`${neighbor.x},${neighbor.y}`] = currentStart;
+              gScoreStart[`${neighbor.x},${neighbor.y}`] = tentativeGScore;
+              fScoreStart[`${neighbor.x},${neighbor.y}`] =
+                tentativeGScore + heuristic(neighbor, endNode);
+
+              if (
+                !openSetStart.some(
+                  (n) => n.x === neighbor.x && n.y === neighbor.y
+                )
+              ) {
+                openSetStart.push(neighbor);
+              }
+            }
+          }
+
+          // 处理终点搜索的邻居
+          const neighborsEnd = getNeighbors(currentEnd);
+          for (const neighbor of neighborsEnd) {
+            const tentativeGScore =
+              gScoreEnd[`${currentEnd.x},${currentEnd.y}`] + 1;
+
+            if (tentativeGScore < gScoreEnd[`${neighbor.x},${neighbor.y}`]) {
+              cameFromEnd[`${neighbor.x},${neighbor.y}`] = currentEnd;
+              gScoreEnd[`${neighbor.x},${neighbor.y}`] = tentativeGScore;
+              fScoreEnd[`${neighbor.x},${neighbor.y}`] =
+                tentativeGScore + heuristic(neighbor, startNode);
+
+              if (
+                !openSetEnd.some(
+                  (n) => n.x === neighbor.x && n.y === neighbor.y
+                )
+              ) {
+                openSetEnd.push(neighbor);
+              }
+            }
+          }
+
+          if (speed > 0 && !found) {
+            animationId = requestAnimationFrame(step);
+          } else if (!found) {
+            step();
+          }
+        }
+
+        if (speed > 0) {
+          animationId = requestAnimationFrame(step);
+        } else {
+          while (!found && openSetStart.length > 0 && openSetEnd.length > 0) {
+            step();
+          }
+        }
+      }
+
+      // 获取邻居节点
+      function getNeighbors(node) {
+        const neighbors = [];
+        const directions = [
+          [0, 1],
+          [1, 0],
+          [0, -1],
+          [-1, 0],
+        ];
+
+        for (const [dx, dy] of directions) {
+          const nx = node.x + dx;
+          const ny = node.y + dy;
+
+          if (
+            nx >= 0 &&
+            nx < mazeSize &&
+            ny >= 0 &&
+            ny < mazeSize &&
+            maze[nx][ny] === 0
+          ) {
+            neighbors.push({ x: nx, y: ny });
+          }
+        }
+
+        return neighbors;
+      }
+
+      // 启发式函数 (曼哈顿距离)
+      function heuristic(a, b) {
+        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+      }
+
+      // 重建路径
+      function reconstructPath(cameFrom, current, fromStart) {
+        path = [];
+        let temp = current;
+
+        while (temp) {
+          path.push(temp);
+          temp = cameFrom[`${temp.x},${temp.y}`];
+        }
+
+        if (!fromStart) {
+          path.reverse();
+        }
+
+        document.getElementById("pathLength").textContent = path.length;
+        drawMaze();
+      }
+
+      // 重建双向路径
+      function reconstructBidirectionalPath(
+        cameFromStart,
+        cameFromEnd,
+        meetingPoint
+      ) {
+        path = [];
+        let temp = meetingPoint;
+
+        // 从相遇点到起点的路径
+        while (temp) {
+          path.push(temp);
+          temp = cameFromStart[`${temp.x},${temp.y}`];
+        }
+
+        path.reverse();
+
+        // 从相遇点到终点的路径 (跳过相遇点)
+        temp = cameFromEnd[`${meetingPoint.x},${meetingPoint.y}`];
+        while (temp) {
+          path.push(temp);
+          temp = cameFromEnd[`${temp.x},${temp.y}`];
+        }
+
+        document.getElementById("pathLength").textContent = path.length;
+        drawMaze();
+      }
+
+      // 更新状态
+      function updateStatus(message) {
+        document.getElementById("status").textContent = message;
+      }
+
+      // 重置
+      function reset() {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+
+        maze = [];
+        path = [];
+        exploredCells = new Set();
+        isFindingPath = false;
+
+        document.getElementById("findPath").disabled = true;
+        document.getElementById("generateMaze").disabled = false;
+        document.getElementById("pathLength").textContent = "-";
+        document.getElementById("exploredNodes").textContent = "0";
+        document.getElementById("computeTime").textContent = "0";
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        updateStatus("准备生成迷宫");
+      }
+
+      // 初始化应用
+      window.onload = init;
+    </script>
+  </body>
+</html>

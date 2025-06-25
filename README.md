@@ -44,3 +44,13 @@ A Pomodoro technique timer to help you focus and manage your time.
 
 snake.html
 A classic snake game for entertainment.
+
+## Maze Generator & Pathfinding
+
+maze.html
+A maze generator with A* pathfinding algorithm visualization. Features include:
+- Recursive backtracking maze generation
+- A* pathfinding with visual animation
+- Support for unidirectional and bidirectional search
+- Adjustable maze size and animation speed
+- Real-time statistics showing path length, explored nodes, and computation time
