@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs/loader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@5.1.1/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: #1e1e1e;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-rows: 50px 40px 1fr;
+            height: 100vh;
+            gap: 8px;
+            padding: 8px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            background: #2d2d2d;
+            border-radius: 6px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button.secondary {
+            background: #666;
+        }
+
+        button.secondary:hover {
+            background: #555;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #2d2d2d;
+            border-radius: 6px;
+        }
+
+        .toolbar button {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #1e1e1e;
+            color: #888;
+        }
+
+        .toolbar button:hover {
+            background: #3c3c3c;
+            color: white;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            height: 100%;
+        }
+
+        .editor-panel {
+            background: #1e1e1e;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .preview-panel {
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            background: #2d2d2d;
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .preview-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: white;
+            color: #333;
+        }
+
+        #editor {
+            height: 100%;
+        }
+
+        /* Markdown preview styles */
+        .preview-content h1,
+        .preview-content h2,
+        .preview-content h3,
+        .preview-content h4,
+        .preview-content h5,
+        .preview-content h6 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .preview-content h1 {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .preview-content h2 {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .preview-content p {
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .preview-content code {
+            background: #f6f8fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 85%;
+        }
+
+        .preview-content pre {
+            background: #f6f8fa;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+
+        .preview-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .preview-content blockquote {
+            border-left: 4px solid #dfe2e5;
+            padding: 0 16px;
+            color: #6a737d;
+            margin-bottom: 16px;
+        }
+
+        .preview-content ul,
+        .preview-content ol {
+            margin-bottom: 16px;
+            padding-left: 30px;
+        }
+
+        .preview-content li {
+            margin-bottom: 8px;
+        }
+
+        .preview-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .preview-content th,
+        .preview-content td {
+            border: 1px solid #dfe2e5;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .preview-content th {
+            background: #f6f8fa;
+            font-weight: bold;
+        }
+
+        .preview-content a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+
+        .preview-content a:hover {
+            text-decoration: underline;
+        }
+
+        .preview-content hr {
+            border: none;
+            border-top: 1px solid #eee;
+            margin: 24px 0;
+        }
+
+        /* File input styles */
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #666;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            display: inline-block;
+        }
+
+        .file-input-label:hover {
+            background: #555;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">📝 Markdown Editor</div>
+            <div class="actions">
+                <label for="file-input" class="file-input-label">Load File</label>
+                <input type="file" id="file-input" class="file-input" accept=".md,.txt,.markdown">
+                <button onclick="saveFile()">Save .md</button>
+                <button onclick="exportHTML()" class="secondary">Export HTML</button>
+            </div>
+        </header>
+        
+        <div class="toolbar">
+            <button onclick="insertMarkdown('# ')" title="Heading 1">H1</button>
+            <button onclick="insertMarkdown('## ')" title="Heading 2">H2</button>
+            <button onclick="insertMarkdown('**', '**')" title="Bold">B</button>
+            <button onclick="insertMarkdown('*', '*')" title="Italic">I</button>
+            <button onclick="insertMarkdown('`', '`')" title="Code">Code</button>
+            <button onclick="insertMarkdown('- ')" title="List">List</button>
+            <button onclick="insertMarkdown('[]()', '', -3)" title="Link">Link</button>
+            <button onclick="insertMarkdown('![]()', '', -3)" title="Image">Image</button>
+            <button onclick="insertMarkdown('> ')" title="Quote">Quote</button>
+            <button onclick="insertMarkdown('```\n', '\n```')" title="Code Block">Block</button>
+        </div>
+
+        <div class="main-content">
+            <div class="editor-panel">
+                <div class="panel-header">Markdown Source</div>
+                <div id="editor"></div>
+            </div>
+            
+            <div class="preview-panel">
+                <div class="panel-header">Preview</div>
+                <div class="preview-content" id="preview">
+                    <h1>Welcome to Markdown Editor!</h1>
+                    <p>Start typing in the editor to see your markdown rendered here.</p>
+                    <h2>Features</h2>
+                    <ul>
+                        <li>Real-time preview</li>
+                        <li>Syntax highlighting</li>
+                        <li>File operations (load, save, export)</li>
+                        <li>Markdown toolbar</li>
+                    </ul>
+                    <h2>Quick Start</h2>
+                    <p>Try typing some markdown in the left panel:</p>
+                    <pre><code># My Heading
+**Bold text** and *italic text*
+
+- List item 1
+- List item 2
+
+[Link](https://example.com)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let editor;
+        
+        // Default markdown content
+        const defaultMarkdown = `# Welcome to Markdown Editor!
+
+Start typing in the editor to see your markdown rendered here.
+
+## Features
+
+- **Real-time preview** - See your changes instantly
+- **Syntax highlighting** - Monaco editor with markdown support  
+- **File operations** - Load, save, and export files
+- **Markdown toolbar** - Quick access to common formatting
+
+## Quick Start
+
+Try editing this text or use the toolbar buttons above to format your content.
+
+### Text Formatting
+
+You can make text **bold** or *italic*, or even ***both***.
+
+You can also add \`inline code\` or create code blocks:
+
+\`\`\`javascript
+function hello() {
+    console.log("Hello, World!");
+}
+\`\`\`
+
+### Lists
+
+Unordered lists:
+- Item 1
+- Item 2
+  - Nested item
+
+Ordered lists:
+1. First item
+2. Second item
+3. Third item
+
+### Links and Images
+
+[Visit GitHub](https://github.com)
+
+### Quotes
+
+> This is a blockquote. You can use it to highlight important information or quotes from other sources.
+
+### Tables
+
+| Feature | Status |
+|---------|--------|
+| Real-time preview | ✅ |
+| File operations | ✅ |
+| Syntax highlighting | ✅ |
+
+---
+
+Happy writing! 🚀`;
+
+        // Initialize Monaco Editor
+        require.config({
+            paths: {
+                'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.47.0/min/vs'
+            }
+        });
+
+        require(['vs/editor/editor.main'], function () {
+            editor = monaco.editor.create(document.getElementById('editor'), {
+                value: defaultMarkdown,
+                language: 'markdown',
+                theme: 'vs-dark',
+                minimap: { enabled: false },
+                fontSize: 14,
+                automaticLayout: true,
+                wordWrap: 'on',
+                scrollBeyondLastLine: false,
+                roundedSelection: false,
+                padding: { top: 16, bottom: 16 },
+                lineNumbers: 'on',
+                folding: true,
+                renderWhitespace: 'boundary'
+            });
+
+            // Update preview on content change
+            editor.onDidChangeModelContent(() => {
+                updatePreview();
+            });
+
+            // Initial preview update
+            updatePreview();
+        });
+
+        function updatePreview() {
+            const markdown = editor.getValue();
+            const html = marked.parse(markdown);
+            document.getElementById('preview').innerHTML = html;
+        }
+
+        function insertMarkdown(before, after = '', cursorOffset = 0) {
+            const selection = editor.getSelection();
+            const selectedText = editor.getModel().getValueInRange(selection);
+            
+            let newText;
+            if (selectedText) {
+                newText = before + selectedText + after;
+            } else {
+                newText = before + after;
+            }
+            
+            editor.executeEdits('', [{
+                range: selection,
+                text: newText
+            }]);
+            
+            // Position cursor
+            if (cursorOffset !== 0) {
+                const position = editor.getPosition();
+                const newPosition = {
+                    lineNumber: position.lineNumber,
+                    column: position.column + cursorOffset
+                };
+                editor.setPosition(newPosition);
+            }
+            
+            editor.focus();
+        }
+
+        function saveFile() {
+            const content = editor.getValue();
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'document.md';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function exportHTML() {
+            const markdown = editor.getValue();
+            const html = marked.parse(markdown);
+            const fullHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exported Markdown</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h2 { border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        code {
+            background: #f6f8fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 85%;
+        }
+        pre {
+            background: #f6f8fa;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        pre code { background: none; padding: 0; }
+        blockquote {
+            border-left: 4px solid #dfe2e5;
+            padding: 0 16px;
+            color: #6a737d;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #dfe2e5;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th { background: #f6f8fa; font-weight: bold; }
+        a { color: #0366d6; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        hr { border: none; border-top: 1px solid #eee; margin: 24px 0; }
+    </style>
+</head>
+<body>
+${html}
+</body>
+</html>`;
+
+            const blob = new Blob([fullHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'document.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // File loading
+        document.getElementById('file-input').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    editor.setValue(e.target.result);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveFile();
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        insertMarkdown('**', '**');
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        insertMarkdown('*', '*');
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

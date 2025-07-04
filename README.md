@@ -54,3 +54,15 @@ A maze generator with A* pathfinding algorithm visualization. Features include:
 - Support for unidirectional and bidirectional search
 - Adjustable maze size and animation speed
 - Real-time statistics showing path length, explored nodes, and computation time
+
+## Markdown Editor
+
+markdown.html
+A full-featured markdown editor with real-time preview and file operations. Features include:
+- Split-pane layout with Monaco editor and live preview
+- Real-time markdown rendering using marked.js
+- Syntax highlighting for markdown
+- File operations: load, save (.md), and export to HTML
+- Markdown toolbar with common formatting shortcuts
+- Keyboard shortcuts (Ctrl+S to save, Ctrl+B for bold, Ctrl+I for italic)
+- Responsive design for mobile devices
