@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科学计算器</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+        }
+
+        .calculator {
+            width: 420px;
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 2px solid #34495e;
+        }
+
+        .header {
+            text-align: center;
+            color: #ecf0f1;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .display {
+            background: linear-gradient(145deg, #1a252f, #2c3e50);
+            color: #00ff88;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            text-align: right;
+            font-size: 28px;
+            font-family: 'Courier New', monospace;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            border: 2px solid #34495e;
+            box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-display {
+            background: linear-gradient(145deg, #1a252f, #2c3e50);
+            color: #f39c12;
+            padding: 8px 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid #34495e;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-gap: 8px;
+        }
+
+        button {
+            background: linear-gradient(145deg, #34495e, #2c3e50);
+            color: #ecf0f1;
+            border: none;
+            padding: 15px 8px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: linear-gradient(145deg, #3c5a78, #34495e);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .number {
+            background: linear-gradient(145deg, #34495e, #2c3e50);
+        }
+
+        .operator {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+        }
+
+        .operator:hover {
+            background: linear-gradient(145deg, #ec7063, #e74c3c);
+        }
+
+        .function {
+            background: linear-gradient(145deg, #3498db, #2980b9);
+            font-size: 14px;
+        }
+
+        .function:hover {
+            background: linear-gradient(145deg, #5dade2, #3498db);
+        }
+
+        .special {
+            background: linear-gradient(145deg, #f39c12, #e67e22);
+        }
+
+        .special:hover {
+            background: linear-gradient(145deg, #f7c52d, #f39c12);
+        }
+
+        .memory {
+            background: linear-gradient(145deg, #9b59b6, #8e44ad);
+            font-size: 14px;
+        }
+
+        .memory:hover {
+            background: linear-gradient(145deg, #bb8fce, #9b59b6);
+        }
+
+        .equals {
+            background: linear-gradient(145deg, #27ae60, #229954);
+            grid-column: span 2;
+        }
+
+        .equals:hover {
+            background: linear-gradient(145deg, #58d68d, #27ae60);
+        }
+
+        .zero {
+            grid-column: span 2;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(145deg, #34495e, #2c3e50);
+            color: #ecf0f1;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: linear-gradient(145deg, #3c5a78, #34495e);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 480px) {
+            .calculator {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            button {
+                padding: 12px 6px;
+                font-size: 14px;
+            }
+            
+            .function {
+                font-size: 12px;
+            }
+            
+            .memory {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-button">← 返回主页</a>
+    
+    <div class="calculator">
+        <div class="header">
+            <h1>科学计算器</h1>
+        </div>
+        
+        <div class="mode-display" id="modeDisplay">角度模式: 度 (DEG)</div>
+        
+        <div class="display" id="display">0</div>
+        
+        <div class="buttons">
+            <!-- 第一行 -->
+            <button class="memory" id="mc">MC</button>
+            <button class="memory" id="mr">MR</button>
+            <button class="memory" id="ms">MS</button>
+            <button class="memory" id="m-plus">M+</button>
+            <button class="memory" id="m-minus">M-</button>
+            <button class="special" id="mode">DEG</button>
+            
+            <!-- 第二行 -->
+            <button class="function" id="sin">sin</button>
+            <button class="function" id="cos">cos</button>
+            <button class="function" id="tan">tan</button>
+            <button class="function" id="log">log</button>
+            <button class="function" id="ln">ln</button>
+            <button class="special" id="clear">AC</button>
+            
+            <!-- 第三行 -->
+            <button class="function" id="asin">asin</button>
+            <button class="function" id="acos">acos</button>
+            <button class="function" id="atan">atan</button>
+            <button class="function" id="exp">exp</button>
+            <button class="function" id="power">x^y</button>
+            <button class="special" id="delete">DEL</button>
+            
+            <!-- 第四行 -->
+            <button class="function" id="sqrt">√</button>
+            <button class="function" id="cbrt">∛</button>
+            <button class="function" id="factorial">x!</button>
+            <button class="function" id="pi">π</button>
+            <button class="function" id="e">e</button>
+            <button class="operator" id="divide">÷</button>
+            
+            <!-- 第五行 -->
+            <button class="number" id="seven">7</button>
+            <button class="number" id="eight">8</button>
+            <button class="number" id="nine">9</button>
+            <button class="function" id="percent">%</button>
+            <button class="function" id="inverse">1/x</button>
+            <button class="operator" id="multiply">×</button>
+            
+            <!-- 第六行 -->
+            <button class="number" id="four">4</button>
+            <button class="number" id="five">5</button>
+            <button class="number" id="six">6</button>
+            <button class="function" id="abs">|x|</button>
+            <button class="function" id="pow2">x²</button>
+            <button class="operator" id="subtract">-</button>
+            
+            <!-- 第七行 -->
+            <button class="number" id="one">1</button>
+            <button class="number" id="two">2</button>
+            <button class="number" id="three">3</button>
+            <button class="function" id="left-paren">(</button>
+            <button class="function" id="right-paren">)</button>
+            <button class="operator" id="add">+</button>
+            
+            <!-- 第八行 -->
+            <button class="number zero" id="zero">0</button>
+            <button class="number" id="decimal">.</button>
+            <button class="function" id="sign">+/-</button>
+            <button class="equals" id="equals">=</button>
+        </div>
+    </div>
+
+    <script>
+        // 计算器状态
+        let currentInput = '0';
+        let previousInput = '0';
+        let operation = null;
+        let memory = 0;
+        let angleMode = 'deg'; // 'deg' 或 'rad'
+        let resetInput = true;
+        let expression = '';
+        let waitingForOperand = false;
+
+        // 获取元素
+        const display = document.getElementById('display');
+        const modeDisplay = document.getElementById('modeDisplay');
+
+        // 更新显示
+        function updateDisplay() {
+            display.textContent = currentInput;
+        }
+
+        // 更新模式显示
+        function updateModeDisplay() {
+            modeDisplay.textContent = `角度模式: ${angleMode === 'deg' ? '度 (DEG)' : '弧度 (RAD)'}`;
+        }
+
+        // 格式化数字
+        function formatNumber(num) {
+            if (num === null || num === undefined || isNaN(num)) {
+                return 'Error';
+            }
+            
+            if (!isFinite(num)) {
+                return num > 0 ? 'Infinity' : '-Infinity';
+            }
+            
+            let str = num.toString();
+            if (str.length > 12) {
+                if (num >= 1e12 || num <= -1e12 || (num > 0 && num < 1e-6) || (num < 0 && num > -1e-6)) {
+                    str = num.toExponential(8);
+                } else {
+                    str = num.toFixed(8);
+                }
+            }
+            return str;
+        }
+
+        // 角度转换
+        function toRadians(degrees) {
+            return degrees * (Math.PI / 180);
+        }
+
+        function toDegrees(radians) {
+            return radians * (180 / Math.PI);
+        }
+
+        // 阶乘函数
+        function factorial(n) {
+            if (n < 0) return NaN;
+            if (n === 0 || n === 1) return 1;
+            if (n > 170) return Infinity; // 防止溢出
+            
+            let result = 1;
+            for (let i = 2; i <= n; i++) {
+                result *= i;
+            }
+            return result;
+        }
+
+        // 处理数字输入
+        function handleNumber(num) {
+            if (waitingForOperand) {
+                currentInput = num;
+                waitingForOperand = false;
+            } else {
+                currentInput = currentInput === '0' ? num : currentInput + num;
+            }
+            updateDisplay();
+        }
+
+        // 处理小数点
+        function handleDecimal() {
+            if (waitingForOperand) {
+                currentInput = '0.';
+                waitingForOperand = false;
+            } else if (currentInput.indexOf('.') === -1) {
+                currentInput += '.';
+            }
+            updateDisplay();
+        }
+
+        // 处理正负号
+        function handleSign() {
+            if (currentInput !== '0') {
+                currentInput = currentInput.startsWith('-') ? 
+                    currentInput.slice(1) : '-' + currentInput;
+            }
+            updateDisplay();
+        }
+
+        // 处理单元运算
+        function handleUnaryOperation(op) {
+            const current = parseFloat(currentInput);
+            let result;
+
+            switch (op) {
+                case 'sin':
+                    result = Math.sin(angleMode === 'deg' ? toRadians(current) : current);
+                    break;
+                case 'cos':
+                    result = Math.cos(angleMode === 'deg' ? toRadians(current) : current);
+                    break;
+                case 'tan':
+                    result = Math.tan(angleMode === 'deg' ? toRadians(current) : current);
+                    break;
+                case 'asin':
+                    result = Math.asin(current);
+                    if (angleMode === 'deg') result = toDegrees(result);
+                    break;
+                case 'acos':
+                    result = Math.acos(current);
+                    if (angleMode === 'deg') result = toDegrees(result);
+                    break;
+                case 'atan':
+                    result = Math.atan(current);
+                    if (angleMode === 'deg') result = toDegrees(result);
+                    break;
+                case 'log':
+                    result = Math.log10(current);
+                    break;
+                case 'ln':
+                    result = Math.log(current);
+                    break;
+                case 'exp':
+                    result = Math.exp(current);
+                    break;
+                case 'sqrt':
+                    result = Math.sqrt(current);
+                    break;
+                case 'cbrt':
+                    result = Math.cbrt(current);
+                    break;
+                case 'factorial':
+                    result = factorial(current);
+                    break;
+                case 'inverse':
+                    result = 1 / current;
+                    break;
+                case 'abs':
+                    result = Math.abs(current);
+                    break;
+                case 'pow2':
+                    result = current * current;
+                    break;
+                case 'percent':
+                    result = current / 100;
+                    break;
+            }
+
+            currentInput = formatNumber(result);
+            waitingForOperand = true;
+            updateDisplay();
+        }
+
+        // 处理二元运算
+        function handleBinaryOperation(nextOperation) {
+            const inputValue = parseFloat(currentInput);
+
+            if (previousInput === null) {
+                previousInput = inputValue;
+            } else if (operation) {
+                const currentValue = previousInput || 0;
+                const newValue = calculate(currentValue, inputValue, operation);
+
+                currentInput = formatNumber(newValue);
+                previousInput = newValue;
+                updateDisplay();
+            }
+
+            waitingForOperand = true;
+            operation = nextOperation;
+        }
+
+        // 计算函数
+        function calculate(firstOperand, secondOperand, operation) {
+            switch (operation) {
+                case '+':
+                    return firstOperand + secondOperand;
+                case '-':
+                    return firstOperand - secondOperand;
+                case '*':
+                    return firstOperand * secondOperand;
+                case '/':
+                    return firstOperand / secondOperand;
+                case 'power':
+                    return Math.pow(firstOperand, secondOperand);
+                default:
+                    return secondOperand;
+            }
+        }
+
+        // 处理等号
+        function handleEquals() {
+            const inputValue = parseFloat(currentInput);
+
+            if (previousInput !== null && operation) {
+                const newValue = calculate(previousInput, inputValue, operation);
+                currentInput = formatNumber(newValue);
+                previousInput = null;
+                operation = null;
+                waitingForOperand = true;
+                updateDisplay();
+            }
+        }
+
+        // 处理清除
+        function handleClear() {
+            currentInput = '0';
+            previousInput = null;
+            operation = null;
+            waitingForOperand = false;
+            updateDisplay();
+        }
+
+        // 处理删除
+        function handleDelete() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        // 切换角度模式
+        function toggleAngleMode() {
+            angleMode = angleMode === 'deg' ? 'rad' : 'deg';
+            document.getElementById('mode').textContent = angleMode.toUpperCase();
+            updateModeDisplay();
+        }
+
+        // 事件监听器
+        document.addEventListener('click', (e) => {
+            const target = e.target;
+
+            if (target.classList.contains('number')) {
+                handleNumber(target.textContent);
+            }
+
+            switch (target.id) {
+                case 'decimal':
+                    handleDecimal();
+                    break;
+                case 'sign':
+                    handleSign();
+                    break;
+                case 'clear':
+                    handleClear();
+                    break;
+                case 'delete':
+                    handleDelete();
+                    break;
+                case 'equals':
+                    handleEquals();
+                    break;
+                case 'mode':
+                    toggleAngleMode();
+                    break;
+                case 'pi':
+                    currentInput = formatNumber(Math.PI);
+                    waitingForOperand = true;
+                    updateDisplay();
+                    break;
+                case 'e':
+                    currentInput = formatNumber(Math.E);
+                    waitingForOperand = true;
+                    updateDisplay();
+                    break;
+                case 'add':
+                    handleBinaryOperation('+');
+                    break;
+                case 'subtract':
+                    handleBinaryOperation('-');
+                    break;
+                case 'multiply':
+                    handleBinaryOperation('*');
+                    break;
+                case 'divide':
+                    handleBinaryOperation('/');
+                    break;
+                case 'power':
+                    handleBinaryOperation('power');
+                    break;
+                case 'mc':
+                    memory = 0;
+                    break;
+                case 'mr':
+                    currentInput = formatNumber(memory);
+                    waitingForOperand = true;
+                    updateDisplay();
+                    break;
+                case 'ms':
+                    memory = parseFloat(currentInput);
+                    break;
+                case 'm-plus':
+                    memory += parseFloat(currentInput);
+                    break;
+                case 'm-minus':
+                    memory -= parseFloat(currentInput);
+                    break;
+                default:
+                    if (['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'log', 'ln', 'exp', 
+                         'sqrt', 'cbrt', 'factorial', 'inverse', 'abs', 'pow2', 'percent'].includes(target.id)) {
+                        handleUnaryOperation(target.id);
+                    }
+            }
+        });
+
+        // 键盘支持
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+
+            if (key >= '0' && key <= '9') {
+                handleNumber(key);
+            } else if (key === '.') {
+                handleDecimal();
+            } else if (key === '+') {
+                handleBinaryOperation('+');
+            } else if (key === '-') {
+                handleBinaryOperation('-');
+            } else if (key === '*') {
+                handleBinaryOperation('*');
+            } else if (key === '/') {
+                e.preventDefault();
+                handleBinaryOperation('/');
+            } else if (key === 'Enter' || key === '=') {
+                handleEquals();
+            } else if (key === 'Escape') {
+                handleClear();
+            } else if (key === 'Backspace') {
+                handleDelete();
+            }
+        });
+
+        // 初始化
+        updateDisplay();
+        updateModeDisplay();
+    </script>
+</body>
+</html>
