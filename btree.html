@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B树可视化演示 - B-Tree Visualization</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 120px;
+        }
+        
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        input, select, button {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            min-width: 80px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+        }
+        
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+        
+        .search-btn {
+            background-color: #2196f3;
+        }
+        
+        .search-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            min-height: 400px;
+        }
+        
+        canvas {
+            border: 1px solid #ddd;
+            background-color: #fafafa;
+        }
+        
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            min-width: 120px;
+        }
+        
+        .stat-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .operation-log {
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .log-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .log-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .log-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .degree-info {
+            font-size: 12px;
+            color: #666;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>B树可视化演示 - B-Tree Visualization</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="degree">B树阶数 (Degree):</label>
+                <select id="degree">
+                    <option value="3">3</option>
+                    <option value="4" selected>4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                </select>
+                <span class="degree-info">最大键数: <span id="maxKeys">3</span></span>
+            </div>
+            
+            <div class="control-group">
+                <label for="insertValue">插入值:</label>
+                <input type="number" id="insertValue" placeholder="输入数字" min="1" max="999">
+                <button onclick="insertValue()">插入</button>
+            </div>
+            
+            <div class="control-group">
+                <label for="deleteValue">删除值:</label>
+                <input type="number" id="deleteValue" placeholder="输入数字" min="1" max="999">
+                <button class="delete-btn" onclick="deleteValue()">删除</button>
+            </div>
+            
+            <div class="control-group">
+                <label for="searchValue">搜索值:</label>
+                <input type="number" id="searchValue" placeholder="输入数字" min="1" max="999">
+                <button class="search-btn" onclick="searchValue()">搜索</button>
+            </div>
+            
+            <div class="control-group">
+                <label>操作:</label>
+                <button onclick="clearTree()">清空树</button>
+                <button onclick="generateRandomTree()">随机生成</button>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <canvas id="canvas" width="1200" height="600"></canvas>
+        </div>
+        
+        <div class="info-panel">
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">树高度</span>
+                    <span class="stat-value" id="treeHeight">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">节点总数</span>
+                    <span class="stat-value" id="nodeCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">键总数</span>
+                    <span class="stat-value" id="keyCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">最后操作</span>
+                    <span class="stat-value" id="lastOperation">无</span>
+                </div>
+            </div>
+            
+            <div class="operation-log" id="operationLog">
+                <div class="log-entry log-info">B树可视化演示启动完成</div>
+                <div class="log-entry log-info">当前阶数: 4, 最大键数: 3</div>
+            </div>
+            
+            <div class="help-text">
+                <strong>操作说明:</strong><br>
+                • 插入: 输入数字并点击插入按钮，观察B树的分裂过程<br>
+                • 删除: 输入数字并点击删除按钮，观察B树的合并过程<br>
+                • 搜索: 输入数字并点击搜索按钮，高亮显示搜索路径<br>
+                • B树阶数决定了每个节点的最大键数 (degree - 1)
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class BTreeNode {
+            constructor(degree, isLeaf = false) {
+                this.degree = degree;
+                this.keys = [];
+                this.children = [];
+                this.isLeaf = isLeaf;
+                this.x = 0;
+                this.y = 0;
+                this.highlight = false;
+            }
+            
+            isFull() {
+                return this.keys.length === this.degree - 1;
+            }
+            
+            insertNonFull(key) {
+                let i = this.keys.length - 1;
+                
+                if (this.isLeaf) {
+                    this.keys.push(0);
+                    while (i >= 0 && this.keys[i] > key) {
+                        this.keys[i + 1] = this.keys[i];
+                        i--;
+                    }
+                    this.keys[i + 1] = key;
+                } else {
+                    while (i >= 0 && this.keys[i] > key) {
+                        i--;
+                    }
+                    i++;
+                    
+                    if (this.children[i].isFull()) {
+                        this.splitChild(i);
+                        if (this.keys[i] < key) {
+                            i++;
+                        }
+                    }
+                    this.children[i].insertNonFull(key);
+                }
+            }
+            
+            splitChild(index) {
+                const fullChild = this.children[index];
+                const newChild = new BTreeNode(this.degree, fullChild.isLeaf);
+                const midIndex = Math.floor((this.degree - 1) / 2);
+                
+                newChild.keys = fullChild.keys.splice(midIndex + 1);
+                if (!fullChild.isLeaf) {
+                    newChild.children = fullChild.children.splice(midIndex + 1);
+                }
+                
+                this.children.splice(index + 1, 0, newChild);
+                this.keys.splice(index, 0, fullChild.keys.splice(midIndex, 1)[0]);
+            }
+            
+            search(key) {
+                let i = 0;
+                while (i < this.keys.length && key > this.keys[i]) {
+                    i++;
+                }
+                
+                if (i < this.keys.length && key === this.keys[i]) {
+                    return { node: this, index: i };
+                }
+                
+                if (this.isLeaf) {
+                    return null;
+                }
+                
+                return this.children[i].search(key);
+            }
+            
+            delete(key) {
+                let i = 0;
+                while (i < this.keys.length && key > this.keys[i]) {
+                    i++;
+                }
+                
+                if (i < this.keys.length && key === this.keys[i]) {
+                    if (this.isLeaf) {
+                        this.keys.splice(i, 1);
+                    } else {
+                        this.deleteFromNonLeaf(i);
+                    }
+                } else if (!this.isLeaf) {
+                    const wasLastKey = (i === this.keys.length);
+                    this.children[i].delete(key);
+                    
+                    if (this.children[i].keys.length < Math.floor(this.degree / 2)) {
+                        this.fixChild(i);
+                    }
+                }
+            }
+            
+            deleteFromNonLeaf(index) {
+                const key = this.keys[index];
+                const minDegree = Math.floor(this.degree / 2);
+                
+                if (this.children[index].keys.length >= minDegree) {
+                    const predecessor = this.getPredecessor(index);
+                    this.keys[index] = predecessor;
+                    this.children[index].delete(predecessor);
+                } else if (this.children[index + 1].keys.length >= minDegree) {
+                    const successor = this.getSuccessor(index);
+                    this.keys[index] = successor;
+                    this.children[index + 1].delete(successor);
+                } else {
+                    this.mergeChild(index);
+                    this.children[index].delete(key);
+                }
+            }
+            
+            getPredecessor(index) {
+                let current = this.children[index];
+                while (!current.isLeaf) {
+                    current = current.children[current.children.length - 1];
+                }
+                return current.keys[current.keys.length - 1];
+            }
+            
+            getSuccessor(index) {
+                let current = this.children[index + 1];
+                while (!current.isLeaf) {
+                    current = current.children[0];
+                }
+                return current.keys[0];
+            }
+            
+            mergeChild(index) {
+                const child = this.children[index];
+                const sibling = this.children[index + 1];
+                
+                child.keys.push(this.keys[index]);
+                child.keys = child.keys.concat(sibling.keys);
+                
+                if (!child.isLeaf) {
+                    child.children = child.children.concat(sibling.children);
+                }
+                
+                this.keys.splice(index, 1);
+                this.children.splice(index + 1, 1);
+            }
+            
+            fixChild(index) {
+                const minDegree = Math.floor(this.degree / 2);
+                
+                if (index !== 0 && this.children[index - 1].keys.length >= minDegree) {
+                    this.borrowFromPrevious(index);
+                } else if (index !== this.children.length - 1 && this.children[index + 1].keys.length >= minDegree) {
+                    this.borrowFromNext(index);
+                } else {
+                    if (index !== this.children.length - 1) {
+                        this.mergeChild(index);
+                    } else {
+                        this.mergeChild(index - 1);
+                    }
+                }
+            }
+            
+            borrowFromPrevious(index) {
+                const child = this.children[index];
+                const sibling = this.children[index - 1];
+                
+                child.keys.unshift(this.keys[index - 1]);
+                this.keys[index - 1] = sibling.keys.pop();
+                
+                if (!child.isLeaf) {
+                    child.children.unshift(sibling.children.pop());
+                }
+            }
+            
+            borrowFromNext(index) {
+                const child = this.children[index];
+                const sibling = this.children[index + 1];
+                
+                child.keys.push(this.keys[index]);
+                this.keys[index] = sibling.keys.shift();
+                
+                if (!child.isLeaf) {
+                    child.children.push(sibling.children.shift());
+                }
+            }
+        }
+        
+        class BTree {
+            constructor(degree) {
+                this.degree = degree;
+                this.root = new BTreeNode(degree, true);
+                this.searchPath = [];
+            }
+            
+            insert(key) {
+                if (this.root.isFull()) {
+                    const newRoot = new BTreeNode(this.degree, false);
+                    newRoot.children.push(this.root);
+                    newRoot.splitChild(0);
+                    this.root = newRoot;
+                }
+                this.root.insertNonFull(key);
+                this.clearHighlights();
+            }
+            
+            delete(key) {
+                this.root.delete(key);
+                if (this.root.keys.length === 0 && !this.root.isLeaf) {
+                    this.root = this.root.children[0];
+                }
+                this.clearHighlights();
+            }
+            
+            search(key) {
+                this.clearHighlights();
+                this.searchPath = [];
+                const result = this.searchRecursive(this.root, key);
+                return result;
+            }
+            
+            searchRecursive(node, key) {
+                this.searchPath.push(node);
+                node.highlight = true;
+                
+                let i = 0;
+                while (i < node.keys.length && key > node.keys[i]) {
+                    i++;
+                }
+                
+                if (i < node.keys.length && key === node.keys[i]) {
+                    return { node: node, index: i };
+                }
+                
+                if (node.isLeaf) {
+                    return null;
+                }
+                
+                return this.searchRecursive(node.children[i], key);
+            }
+            
+            clearHighlights() {
+                this.clearHighlightsRecursive(this.root);
+                this.searchPath = [];
+            }
+            
+            clearHighlightsRecursive(node) {
+                if (!node) return;
+                node.highlight = false;
+                for (let child of node.children) {
+                    this.clearHighlightsRecursive(child);
+                }
+            }
+            
+            getHeight() {
+                return this.getHeightRecursive(this.root);
+            }
+            
+            getHeightRecursive(node) {
+                if (!node || node.isLeaf) return 1;
+                return 1 + Math.max(...node.children.map(child => this.getHeightRecursive(child)));
+            }
+            
+            getNodeCount() {
+                return this.getNodeCountRecursive(this.root);
+            }
+            
+            getNodeCountRecursive(node) {
+                if (!node) return 0;
+                return 1 + node.children.reduce((sum, child) => sum + this.getNodeCountRecursive(child), 0);
+            }
+            
+            getKeyCount() {
+                return this.getKeyCountRecursive(this.root);
+            }
+            
+            getKeyCountRecursive(node) {
+                if (!node) return 0;
+                return node.keys.length + node.children.reduce((sum, child) => sum + this.getKeyCountRecursive(child), 0);
+            }
+        }
+        
+        class BTreeVisualizer {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.btree = new BTree(4);
+                this.nodeWidth = 120;
+                this.nodeHeight = 40;
+                this.levelHeight = 80;
+                this.margin = 50;
+                this.animationId = null;
+            }
+            
+            drawTree() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                if (this.btree.root.keys.length === 0) return;
+                
+                this.calculatePositions();
+                this.drawNode(this.btree.root);
+            }
+            
+            calculatePositions() {
+                this.calculateNodePositions(this.btree.root, 0, this.canvas.width / 2, this.margin);
+            }
+            
+            calculateNodePositions(node, level, x, y) {
+                node.x = x;
+                node.y = y;
+                
+                if (node.children.length === 0) return;
+                
+                const totalWidth = this.getTotalWidth(node);
+                const startX = x - totalWidth / 2;
+                let currentX = startX;
+                
+                for (let i = 0; i < node.children.length; i++) {
+                    const childWidth = this.getSubtreeWidth(node.children[i]);
+                    const childX = currentX + childWidth / 2;
+                    this.calculateNodePositions(node.children[i], level + 1, childX, y + this.levelHeight);
+                    currentX += childWidth;
+                }
+            }
+            
+            getTotalWidth(node) {
+                if (node.children.length === 0) return this.nodeWidth;
+                return node.children.reduce((sum, child) => sum + this.getSubtreeWidth(child), 0);
+            }
+            
+            getSubtreeWidth(node) {
+                if (node.children.length === 0) return Math.max(this.nodeWidth, this.nodeWidth * 0.8);
+                const childrenWidth = node.children.reduce((sum, child) => sum + this.getSubtreeWidth(child), 0);
+                return Math.max(childrenWidth, this.nodeWidth);
+            }
+            
+            drawNode(node) {
+                // Draw connections to children first
+                for (let i = 0; i < node.children.length; i++) {
+                    const child = node.children[i];
+                    this.drawConnection(node.x, node.y + this.nodeHeight, child.x, child.y);
+                    this.drawNode(child);
+                }
+                
+                // Draw node
+                const nodeColor = node.highlight ? '#ffeb3b' : '#e3f2fd';
+                const borderColor = node.highlight ? '#f57f17' : '#1976d2';
+                
+                this.ctx.fillStyle = nodeColor;
+                this.ctx.strokeStyle = borderColor;
+                this.ctx.lineWidth = 2;
+                
+                const nodeWidth = Math.max(this.nodeWidth, node.keys.length * 30 + 20);
+                const x = node.x - nodeWidth / 2;
+                const y = node.y;
+                
+                this.ctx.fillRect(x, y, nodeWidth, this.nodeHeight);
+                this.ctx.strokeRect(x, y, nodeWidth, this.nodeHeight);
+                
+                // Draw keys
+                this.ctx.fillStyle = '#333';
+                this.ctx.font = '14px Arial';
+                this.ctx.textAlign = 'center';
+                
+                const keySpacing = nodeWidth / (node.keys.length + 1);
+                for (let i = 0; i < node.keys.length; i++) {
+                    const keyX = x + keySpacing * (i + 1);
+                    const keyY = y + this.nodeHeight / 2 + 5;
+                    this.ctx.fillText(node.keys[i].toString(), keyX, keyY);
+                }
+            }
+            
+            drawConnection(x1, y1, x2, y2) {
+                this.ctx.strokeStyle = '#666';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1, y1);
+                this.ctx.lineTo(x2, y2);
+                this.ctx.stroke();
+            }
+            
+            setDegree(degree) {
+                this.btree = new BTree(degree);
+                this.updateStats();
+                this.drawTree();
+            }
+            
+            updateStats() {
+                document.getElementById('treeHeight').textContent = this.btree.getHeight();
+                document.getElementById('nodeCount').textContent = this.btree.getNodeCount();
+                document.getElementById('keyCount').textContent = this.btree.getKeyCount();
+            }
+        }
+        
+        // Global variables
+        let visualizer;
+        let logContainer;
+        
+        function init() {
+            const canvas = document.getElementById('canvas');
+            visualizer = new BTreeVisualizer(canvas);
+            logContainer = document.getElementById('operationLog');
+            
+            // Update max keys display
+            updateMaxKeysDisplay();
+            
+            // Add event listeners
+            document.getElementById('degree').addEventListener('change', function() {
+                const degree = parseInt(this.value);
+                visualizer.setDegree(degree);
+                updateMaxKeysDisplay();
+                addLog(`B树阶数更改为: ${degree}`, 'info');
+            });
+            
+            // Add enter key listeners
+            document.getElementById('insertValue').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') insertValue();
+            });
+            
+            document.getElementById('deleteValue').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') deleteValue();
+            });
+            
+            document.getElementById('searchValue').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') searchValue();
+            });
+            
+            visualizer.updateStats();
+            visualizer.drawTree();
+        }
+        
+        function updateMaxKeysDisplay() {
+            const degree = parseInt(document.getElementById('degree').value);
+            document.getElementById('maxKeys').textContent = degree - 1;
+        }
+        
+        function insertValue() {
+            const input = document.getElementById('insertValue');
+            const value = parseInt(input.value);
+            
+            if (isNaN(value) || value < 1 || value > 999) {
+                addLog('错误: 请输入1-999之间的数字', 'error');
+                return;
+            }
+            
+            // Check if value already exists
+            const existing = visualizer.btree.search(value);
+            if (existing) {
+                addLog(`值 ${value} 已存在于B树中`, 'error');
+                return;
+            }
+            
+            visualizer.btree.insert(value);
+            visualizer.updateStats();
+            visualizer.drawTree();
+            
+            document.getElementById('lastOperation').textContent = `插入 ${value}`;
+            addLog(`成功插入值: ${value}`, 'success');
+            input.value = '';
+        }
+        
+        function deleteValue() {
+            const input = document.getElementById('deleteValue');
+            const value = parseInt(input.value);
+            
+            if (isNaN(value) || value < 1 || value > 999) {
+                addLog('错误: 请输入1-999之间的数字', 'error');
+                return;
+            }
+            
+            // Check if value exists
+            const existing = visualizer.btree.search(value);
+            if (!existing) {
+                addLog(`值 ${value} 不存在于B树中`, 'error');
+                return;
+            }
+            
+            visualizer.btree.delete(value);
+            visualizer.updateStats();
+            visualizer.drawTree();
+            
+            document.getElementById('lastOperation').textContent = `删除 ${value}`;
+            addLog(`成功删除值: ${value}`, 'success');
+            input.value = '';
+        }
+        
+        function searchValue() {
+            const input = document.getElementById('searchValue');
+            const value = parseInt(input.value);
+            
+            if (isNaN(value) || value < 1 || value > 999) {
+                addLog('错误: 请输入1-999之间的数字', 'error');
+                return;
+            }
+            
+            const result = visualizer.btree.search(value);
+            visualizer.drawTree();
+            
+            if (result) {
+                document.getElementById('lastOperation').textContent = `搜索 ${value} (找到)`;
+                addLog(`成功找到值: ${value}`, 'success');
+            } else {
+                document.getElementById('lastOperation').textContent = `搜索 ${value} (未找到)`;
+                addLog(`未找到值: ${value}`, 'error');
+            }
+            
+            input.value = '';
+        }
+        
+        function clearTree() {
+            const degree = parseInt(document.getElementById('degree').value);
+            visualizer.setDegree(degree);
+            document.getElementById('lastOperation').textContent = '清空树';
+            addLog('B树已清空', 'info');
+        }
+        
+        function generateRandomTree() {
+            clearTree();
+            
+            const values = [];
+            for (let i = 0; i < 15; i++) {
+                let value;
+                do {
+                    value = Math.floor(Math.random() * 100) + 1;
+                } while (values.includes(value));
+                values.push(value);
+                visualizer.btree.insert(value);
+            }
+            
+            visualizer.updateStats();
+            visualizer.drawTree();
+            
+            document.getElementById('lastOperation').textContent = '生成随机树';
+            addLog(`随机生成B树，包含值: ${values.sort((a, b) => a - b).join(', ')}`, 'info');
+        }
+        
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Keep only last 20 log entries
+            while (logContainer.children.length > 20) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

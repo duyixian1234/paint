@@ -54,3 +54,14 @@ A maze generator with A* pathfinding algorithm visualization. Features include:
 - Support for unidirectional and bidirectional search
 - Adjustable maze size and animation speed
 - Real-time statistics showing path length, explored nodes, and computation time
+
+## B-Tree Visualization
+
+btree.html
+An interactive B-tree data structure demonstration with visual representation of insert, delete, and search operations. Features include:
+- Interactive B-tree operations (insert, delete, search)
+- Configurable tree degree (3-7)
+- Visual highlighting of search paths
+- Real-time statistics showing tree height, node count, and key count
+- Step-by-step operation logging
+- Random tree generation for testing
