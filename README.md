@@ -45,6 +45,11 @@ A Pomodoro technique timer to help you focus and manage your time.
 snake.html
 A classic snake game for entertainment.
 
+## Breakout Game
+
+breakout.html
+Classic brick breaker game with paddle controls and colorful bricks. Features mouse and keyboard controls, score system, and multiple lives.
+
 ## Maze Generator & Pathfinding
 
 maze.html
