@@ -522,12 +522,12 @@
                 // 替换数学函数
                 let code = expr
                     .replace(/\^/g, '**')
+                    .replace(/log/g, 'Math.log10')
+                    .replace(/ln/g, 'Math.log')
                     .replace(/sin/g, 'Math.sin')
                     .replace(/cos/g, 'Math.cos')
                     .replace(/tan/g, 'Math.tan')
                     .replace(/exp/g, 'Math.exp')
-                    .replace(/ln/g, 'Math.log')
-                    .replace(/log/g, 'Math.log10')
                     .replace(/sqrt/g, 'Math.sqrt')
                     .replace(/abs/g, 'Math.abs')
                     .replace(/pi/g, 'Math.PI')
@@ -680,7 +680,6 @@
                 this.ctx.beginPath();
                 
                 let started = false;
-                const step = (this.xMax - this.xMin) / (width * 2); // 更密集的采样
                 
                 for (let px = 0; px <= width; px++) {
                     const x = this.pixelToGraphX(px);
