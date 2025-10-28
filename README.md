@@ -59,3 +59,15 @@ A maze generator with A* pathfinding algorithm visualization. Features include:
 - Support for unidirectional and bidirectional search
 - Adjustable maze size and animation speed
 - Real-time statistics showing path length, explored nodes, and computation time
+
+## Graph Calculator
+
+graph-calc.html
+A powerful graphical function plotter that renders various mathematical functions on a coordinate plane. Features include:
+- Plot multiple functions simultaneously with different colors
+- Support for common mathematical functions (sin, cos, tan, exp, log, sqrt, etc.)
+- Interactive coordinate display on mouse hover
+- Adjustable view range (zoom and pan)
+- Function list management (toggle visibility, remove functions)
+- Predefined function examples for quick testing
+- Grid and axes with automatic scaling

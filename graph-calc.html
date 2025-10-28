@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图形计算器 - 函数绘图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .control-panel {
+            flex: 0 0 350px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .canvas-container {
+            flex: 1;
+            min-width: 600px;
+            padding: 30px;
+            position: relative;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="number"],
+        .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .input-group input[type="text"]:focus,
+        .input-group input[type="number"]:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .function-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .function-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .function-text {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .function-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .icon-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-toggle {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-toggle.disabled {
+            background: #6c757d;
+        }
+
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+        }
+
+        canvas {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: crosshair;
+            display: block;
+            max-width: 100%;
+        }
+
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .example-btn {
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+
+        .example-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        .coordinates {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .control-panel {
+                flex: 1;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+
+            .canvas-container {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 图形计算器 - 函数绘图器</h1>
+            <a href="index.html" class="back-button">← 返回主页</a>
+        </div>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <div class="section">
+                    <div class="section-title">添加函数</div>
+                    <div class="input-group">
+                        <label>函数表达式 (使用 x 作为变量)</label>
+                        <input type="text" id="functionInput" placeholder="例如: sin(x), x^2, exp(x)" value="sin(x)">
+                        <div class="info-text">
+                            支持: +, -, *, /, ^(乘方), sin, cos, tan, exp, log, ln, sqrt, abs 等
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>颜色</label>
+                        <select id="colorInput">
+                            <option value="#e74c3c">红色</option>
+                            <option value="#3498db">蓝色</option>
+                            <option value="#2ecc71">绿色</option>
+                            <option value="#f39c12">橙色</option>
+                            <option value="#9b59b6">紫色</option>
+                            <option value="#1abc9c">青色</option>
+                            <option value="#34495e">深灰</option>
+                            <option value="#e91e63">粉色</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="addFunction">添加函数</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">函数列表</div>
+                    <div class="function-list" id="functionList">
+                        <div style="text-align: center; color: #999; padding: 20px;">
+                            暂无函数
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">视图控制</div>
+                    <div class="controls-grid">
+                        <div class="input-group">
+                            <label>X 最小值</label>
+                            <input type="number" id="xMin" value="-10" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>X 最大值</label>
+                            <input type="number" id="xMax" value="10" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Y 最小值</label>
+                            <input type="number" id="yMin" value="-10" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Y 最大值</label>
+                            <input type="number" id="yMax" value="10" step="1">
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" id="applyView">应用视图</button>
+                        <button class="btn btn-secondary" id="resetView">重置视图</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">示例函数</div>
+                    <div class="examples">
+                        <button class="example-btn" data-func="sin(x)">sin(x)</button>
+                        <button class="example-btn" data-func="cos(x)">cos(x)</button>
+                        <button class="example-btn" data-func="tan(x)">tan(x)</button>
+                        <button class="example-btn" data-func="x^2">x²</button>
+                        <button class="example-btn" data-func="x^3">x³</button>
+                        <button class="example-btn" data-func="sqrt(x)">√x</button>
+                        <button class="example-btn" data-func="exp(x)">eˣ</button>
+                        <button class="example-btn" data-func="ln(x)">ln(x)</button>
+                        <button class="example-btn" data-func="1/x">1/x</button>
+                        <button class="example-btn" data-func="abs(x)">|x|</button>
+                        <button class="example-btn" data-func="sin(x)/x">sin(x)/x</button>
+                        <button class="example-btn" data-func="x*sin(x)">x·sin(x)</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <button class="btn btn-danger" id="clearAll">清除所有函数</button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="graphCanvas" width="800" height="600"></canvas>
+                <div class="coordinates" id="coordinates">x: 0.00, y: 0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 图形计算器类
+        class GraphCalculator {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.functions = [];
+                this.nextId = 1;
+                
+                // 视图范围
+                this.xMin = -10;
+                this.xMax = 10;
+                this.yMin = -10;
+                this.yMax = 10;
+                
+                // 设置高DPI支持
+                this.setupCanvas();
+                
+                // 绑定鼠标事件
+                this.setupMouseEvents();
+                
+                // 初始绘制
+                this.draw();
+            }
+            
+            setupCanvas() {
+                const dpr = window.devicePixelRatio || 1;
+                const rect = this.canvas.getBoundingClientRect();
+                
+                this.canvas.width = rect.width * dpr;
+                this.canvas.height = rect.height * dpr;
+                
+                this.ctx.scale(dpr, dpr);
+                
+                this.canvas.style.width = rect.width + 'px';
+                this.canvas.style.height = rect.height + 'px';
+            }
+            
+            setupMouseEvents() {
+                this.canvas.addEventListener('mousemove', (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    const graphX = this.pixelToGraphX(x);
+                    const graphY = this.pixelToGraphY(y);
+                    
+                    document.getElementById('coordinates').textContent = 
+                        `x: ${graphX.toFixed(2)}, y: ${graphY.toFixed(2)}`;
+                });
+            }
+            
+            pixelToGraphX(px) {
+                const rect = this.canvas.getBoundingClientRect();
+                return this.xMin + (px / rect.width) * (this.xMax - this.xMin);
+            }
+            
+            pixelToGraphY(py) {
+                const rect = this.canvas.getBoundingClientRect();
+                return this.yMax - (py / rect.height) * (this.yMax - this.yMin);
+            }
+            
+            graphToPixelX(x) {
+                const rect = this.canvas.getBoundingClientRect();
+                return ((x - this.xMin) / (this.xMax - this.xMin)) * rect.width;
+            }
+            
+            graphToPixelY(y) {
+                const rect = this.canvas.getBoundingClientRect();
+                return ((this.yMax - y) / (this.yMax - this.yMin)) * rect.height;
+            }
+            
+            addFunction(expression, color) {
+                try {
+                    // 测试函数是否有效
+                    this.evaluateExpression(expression, 0);
+                    
+                    const func = {
+                        id: this.nextId++,
+                        expression: expression,
+                        color: color,
+                        enabled: true
+                    };
+                    
+                    this.functions.push(func);
+                    this.draw();
+                    return func;
+                } catch (error) {
+                    throw new Error('无效的函数表达式: ' + error.message);
+                }
+            }
+            
+            removeFunction(id) {
+                this.functions = this.functions.filter(f => f.id !== id);
+                this.draw();
+            }
+            
+            toggleFunction(id) {
+                const func = this.functions.find(f => f.id === id);
+                if (func) {
+                    func.enabled = !func.enabled;
+                    this.draw();
+                }
+            }
+            
+            clearFunctions() {
+                this.functions = [];
+                this.draw();
+            }
+            
+            setView(xMin, xMax, yMin, yMax) {
+                this.xMin = xMin;
+                this.xMax = xMax;
+                this.yMin = yMin;
+                this.yMax = yMax;
+                this.draw();
+            }
+            
+            evaluateExpression(expr, x) {
+                // 替换数学函数
+                let code = expr
+                    .replace(/\^/g, '**')
+                    .replace(/sin/g, 'Math.sin')
+                    .replace(/cos/g, 'Math.cos')
+                    .replace(/tan/g, 'Math.tan')
+                    .replace(/exp/g, 'Math.exp')
+                    .replace(/ln/g, 'Math.log')
+                    .replace(/log/g, 'Math.log10')
+                    .replace(/sqrt/g, 'Math.sqrt')
+                    .replace(/abs/g, 'Math.abs')
+                    .replace(/pi/g, 'Math.PI')
+                    .replace(/e(?!x)/g, 'Math.E');
+                
+                try {
+                    // 使用Function构造函数计算
+                    const f = new Function('x', `return ${code}`);
+                    const result = f(x);
+                    return isFinite(result) ? result : null;
+                } catch (e) {
+                    return null;
+                }
+            }
+            
+            draw() {
+                const rect = this.canvas.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                
+                // 清空画布
+                this.ctx.clearRect(0, 0, width, height);
+                
+                // 绘制背景
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(0, 0, width, height);
+                
+                // 绘制网格
+                this.drawGrid();
+                
+                // 绘制坐标轴
+                this.drawAxes();
+                
+                // 绘制所有启用的函数
+                this.functions.forEach(func => {
+                    if (func.enabled) {
+                        this.drawFunction(func);
+                    }
+                });
+            }
+            
+            drawGrid() {
+                const rect = this.canvas.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                
+                this.ctx.strokeStyle = '#f0f0f0';
+                this.ctx.lineWidth = 1;
+                
+                // 计算网格间距
+                const xRange = this.xMax - this.xMin;
+                const yRange = this.yMax - this.yMin;
+                
+                const xStep = this.calculateGridStep(xRange);
+                const yStep = this.calculateGridStep(yRange);
+                
+                // 绘制垂直网格线
+                for (let x = Math.ceil(this.xMin / xStep) * xStep; x <= this.xMax; x += xStep) {
+                    const px = this.graphToPixelX(x);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(px, 0);
+                    this.ctx.lineTo(px, height);
+                    this.ctx.stroke();
+                }
+                
+                // 绘制水平网格线
+                for (let y = Math.ceil(this.yMin / yStep) * yStep; y <= this.yMax; y += yStep) {
+                    const py = this.graphToPixelY(y);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, py);
+                    this.ctx.lineTo(width, py);
+                    this.ctx.stroke();
+                }
+            }
+            
+            calculateGridStep(range) {
+                const roughStep = range / 10;
+                const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+                const normalized = roughStep / magnitude;
+                
+                if (normalized < 1.5) return magnitude;
+                if (normalized < 3) return 2 * magnitude;
+                if (normalized < 7) return 5 * magnitude;
+                return 10 * magnitude;
+            }
+            
+            drawAxes() {
+                const rect = this.canvas.getBoundingClientRect();
+                const width = rect.width;
+                const height = rect.height;
+                
+                this.ctx.strokeStyle = '#333';
+                this.ctx.lineWidth = 2;
+                
+                // X轴
+                if (this.yMin <= 0 && this.yMax >= 0) {
+                    const y = this.graphToPixelY(0);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(width, y);
+                    this.ctx.stroke();
+                    
+                    // X轴标签
+                    this.ctx.fillStyle = '#333';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.textAlign = 'center';
+                    
+                    const xRange = this.xMax - this.xMin;
+                    const xStep = this.calculateGridStep(xRange);
+                    
+                    for (let x = Math.ceil(this.xMin / xStep) * xStep; x <= this.xMax; x += xStep) {
+                        if (Math.abs(x) > 0.001) {
+                            const px = this.graphToPixelX(x);
+                            this.ctx.fillText(x.toFixed(1), px, y + 15);
+                        }
+                    }
+                }
+                
+                // Y轴
+                if (this.xMin <= 0 && this.xMax >= 0) {
+                    const x = this.graphToPixelX(0);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, height);
+                    this.ctx.stroke();
+                    
+                    // Y轴标签
+                    this.ctx.fillStyle = '#333';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.textAlign = 'right';
+                    
+                    const yRange = this.yMax - this.yMin;
+                    const yStep = this.calculateGridStep(yRange);
+                    
+                    for (let y = Math.ceil(this.yMin / yStep) * yStep; y <= this.yMax; y += yStep) {
+                        if (Math.abs(y) > 0.001) {
+                            const py = this.graphToPixelY(y);
+                            this.ctx.fillText(y.toFixed(1), x - 5, py + 4);
+                        }
+                    }
+                }
+            }
+            
+            drawFunction(func) {
+                const rect = this.canvas.getBoundingClientRect();
+                const width = rect.width;
+                
+                this.ctx.strokeStyle = func.color;
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                
+                let started = false;
+                const step = (this.xMax - this.xMin) / (width * 2); // 更密集的采样
+                
+                for (let px = 0; px <= width; px++) {
+                    const x = this.pixelToGraphX(px);
+                    const y = this.evaluateExpression(func.expression, x);
+                    
+                    if (y !== null && isFinite(y)) {
+                        const py = this.graphToPixelY(y);
+                        
+                        // 只绘制在视图范围内的点
+                        if (py >= -100 && py <= rect.height + 100) {
+                            if (!started) {
+                                this.ctx.moveTo(px, py);
+                                started = true;
+                            } else {
+                                this.ctx.lineTo(px, py);
+                            }
+                        } else {
+                            started = false;
+                        }
+                    } else {
+                        started = false;
+                    }
+                }
+                
+                this.ctx.stroke();
+            }
+        }
+        
+        // 初始化图形计算器
+        const calculator = new GraphCalculator('graphCanvas');
+        
+        // UI事件处理
+        document.getElementById('addFunction').addEventListener('click', () => {
+            const expression = document.getElementById('functionInput').value.trim();
+            const color = document.getElementById('colorInput').value;
+            
+            if (expression) {
+                try {
+                    const func = calculator.addFunction(expression, color);
+                    updateFunctionList();
+                    document.getElementById('functionInput').value = '';
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+        });
+        
+        document.getElementById('clearAll').addEventListener('click', () => {
+            if (confirm('确定要清除所有函数吗？')) {
+                calculator.clearFunctions();
+                updateFunctionList();
+            }
+        });
+        
+        document.getElementById('applyView').addEventListener('click', () => {
+            const xMin = parseFloat(document.getElementById('xMin').value);
+            const xMax = parseFloat(document.getElementById('xMax').value);
+            const yMin = parseFloat(document.getElementById('yMin').value);
+            const yMax = parseFloat(document.getElementById('yMax').value);
+            
+            if (xMin >= xMax || yMin >= yMax) {
+                alert('最小值必须小于最大值！');
+                return;
+            }
+            
+            calculator.setView(xMin, xMax, yMin, yMax);
+        });
+        
+        document.getElementById('resetView').addEventListener('click', () => {
+            document.getElementById('xMin').value = -10;
+            document.getElementById('xMax').value = 10;
+            document.getElementById('yMin').value = -10;
+            document.getElementById('yMax').value = 10;
+            calculator.setView(-10, 10, -10, 10);
+        });
+        
+        // 示例按钮
+        document.querySelectorAll('.example-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('functionInput').value = btn.dataset.func;
+            });
+        });
+        
+        // 更新函数列表
+        function updateFunctionList() {
+            const list = document.getElementById('functionList');
+            
+            if (calculator.functions.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无函数</div>';
+                return;
+            }
+            
+            list.innerHTML = calculator.functions.map(func => `
+                <div class="function-item" style="border-left-color: ${func.color}">
+                    <div class="function-text">${func.expression}</div>
+                    <div class="function-actions">
+                        <button class="icon-btn btn-toggle ${func.enabled ? '' : 'disabled'}" 
+                                onclick="toggleFunction(${func.id})">
+                            ${func.enabled ? '👁' : '🚫'}
+                        </button>
+                        <button class="icon-btn btn-remove" onclick="removeFunction(${func.id})">
+                            ×
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function toggleFunction(id) {
+            calculator.toggleFunction(id);
+            updateFunctionList();
+        }
+        
+        function removeFunction(id) {
+            calculator.removeFunction(id);
+            updateFunctionList();
+        }
+        
+        // 窗口大小改变时重绘
+        window.addEventListener('resize', () => {
+            calculator.setupCanvas();
+            calculator.draw();
+        });
+        
+        // 回车键添加函数
+        document.getElementById('functionInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('addFunction').click();
+            }
+        });
+        
+        // 添加默认示例函数
+        setTimeout(() => {
+            calculator.addFunction('sin(x)', '#e74c3c');
+            updateFunctionList();
+        }, 100);
+    </script>
+</body>
+</html>
