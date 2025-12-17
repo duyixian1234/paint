@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cool Particle Effect with Configurable Parameters</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        #canvas-container {
+            position: relative;
+            flex: 1;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            z-index: 100;
+            min-width: 250px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #4fc3f7;
+        }
+        
+        input[type="range"], select {
+            width: 100%;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: white;
+        }
+        
+        .value-display {
+            display: inline-block;
+            width: 40px;
+            text-align: right;
+            font-size: 12px;
+            color: #4fc3f7;
+        }
+        
+        h1 {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 28px;
+            text-shadow: 0 0 10px rgba(79, 195, 247, 0.7);
+            z-index: 10;
+            letter-spacing: 2px;
+        }
+        
+        .presets {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        button {
+            background: rgba(79, 195, 247, 0.2);
+            border: 1px solid rgba(79, 195, 247, 0.5);
+            color: #4fc3f7;
+            padding: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: rgba(79, 195, 247, 0.4);
+        }
+        
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: #aaa;
+            font-size: 12px;
+            z-index: 100;
+            max-width: 300px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>COOL PARTICLE EFFECT</h1>
+    
+    <div id="canvas-container">
+        <canvas id="particleCanvas"></canvas>
+        
+        <div id="controls">
+            <div class="control-group">
+                <label for="particleCount">Particle Count: <span id="countValue" class="value-display">100</span></label>
+                <input type="range" id="particleCount" min="10" max="500" value="100">
+            </div>
+            
+            <div class="control-group">
+                <label for="particleSize">Particle Size: <span id="sizeValue" class="value-display">2</span></label>
+                <input type="range" id="particleSize" min="1" max="10" value="2" step="0.5">
+            </div>
+            
+            <div class="control-group">
+                <label for="connectionDistance">Connection Distance: <span id="distanceValue" class="value-display">100</span></label>
+                <input type="range" id="connectionDistance" min="50" max="200" value="100">
+            </div>
+            
+            <div class="control-group">
+                <label for="speedFactor">Speed Factor: <span id="speedValue" class="value-display">1</span></label>
+                <input type="range" id="speedFactor" min="0.1" max="3" value="1" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label for="colorScheme">Color Scheme:</label>
+                <select id="colorScheme">
+                    <option value="rainbow">Rainbow</option>
+                    <option value="blue">Blue Hues</option>
+                    <option value="purple">Purple Hues</option>
+                    <option value="green">Green Hues</option>
+                    <option value="red">Red Hues</option>
+                    <option value="monochrome">Monochrome</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Presets:</label>
+                <div class="presets">
+                    <button id="densePreset">Dense Network</button>
+                    <button id="slowPreset">Slow Motion</button>
+                    <button id="largePreset">Large Particles</button>
+                    <button id="minimalPreset">Minimal</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            Move your mouse to interact with particles | Click to add particles | Drag to move particles
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas to full window size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Particle system configuration
+        const config = {
+            particleCount: 100,
+            particleSize: 2,
+            connectionDistance: 100,
+            speedFactor: 1,
+            colorScheme: 'rainbow'
+        };
+        
+        // Mouse position tracking
+        const mouse = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 100,
+            down: false
+        };
+        
+        // Track mouse position
+        canvas.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+        
+        canvas.addEventListener('mousedown', () => {
+            mouse.down = true;
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            mouse.down = false;
+        });
+        
+        canvas.addEventListener('click', (e) => {
+            // Add particles at click position
+            for (let i = 0; i < 10; i++) {
+                particles.push(new Particle(e.clientX, e.clientY));
+            }
+        });
+        
+        // Particle class
+        class Particle {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.size = config.particleSize + Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 2 * config.speedFactor;
+                this.speedY = (Math.random() - 0.5) * 2 * config.speedFactor;
+                
+                // Color based on scheme
+                this.color = this.getColor();
+            }
+            
+            getColor() {
+                switch(config.colorScheme) {
+                    case 'rainbow':
+                        const hue = Math.floor(Math.random() * 360);
+                        return `hsl(${hue}, 80%, 60%)`;
+                    case 'blue':
+                        const blueHue = 200 + Math.random() * 40;
+                        return `hsl(${blueHue}, 80%, 60%)`;
+                    case 'purple':
+                        const purpleHue = 280 + Math.random() * 40;
+                        return `hsl(${purpleHue}, 80%, 60%)`;
+                    case 'green':
+                        const greenHue = 100 + Math.random() * 40;
+                        return `hsl(${greenHue}, 80%, 60%)`;
+                    case 'red':
+                        const redHue = Math.random() * 20;
+                        return `hsl(${redHue}, 80%, 60%)`;
+                    case 'monochrome':
+                        const gray = Math.floor(Math.random() * 100) + 100;
+                        return `rgb(${gray}, ${gray}, ${gray})`;
+                    default:
+                        return '#4fc3f7';
+                }
+            }
+            
+            update() {
+                // Update position
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                // Boundary checks - bounce off walls
+                if (this.x <= 0 || this.x >= canvas.width) {
+                    this.speedX *= -1;
+                }
+                if (this.y <= 0 || this.y >= canvas.height) {
+                    this.speedY *= -1;
+                }
+                
+                // Mouse interaction
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < mouse.radius) {
+                    if (mouse.down) {
+                        // Drag particles when mouse is down
+                        this.x -= dx * 0.05;
+                        this.y -= dy * 0.05;
+                    } else {
+                        // Repel particles from mouse
+                        const force = (mouse.radius - distance) / mouse.radius;
+                        this.x -= dx * force * 0.05;
+                        this.y -= dy * force * 0.05;
+                    }
+                }
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Create particles
+        let particles = [];
+        
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < config.particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+        
+        // Draw connections between particles
+        function connectParticles() {
+            for (let a = 0; a < particles.length; a++) {
+                for (let b = a; b < particles.length; b++) {
+                    const dx = particles[a].x - particles[b].x;
+                    const dy = particles[a].y - particles[b].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < config.connectionDistance) {
+                        const opacity = 1 - distance / config.connectionDistance;
+                        
+                        ctx.strokeStyle = `rgba(79, 195, 247, ${opacity * 0.3})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[a].x, particles[a].y);
+                        ctx.lineTo(particles[b].x, particles[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        // Animation loop
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw particles
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            
+            // Draw connections
+            connectParticles();
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Initialize
+        initParticles();
+        animate();
+        
+        // Control event listeners
+        document.getElementById('particleCount').addEventListener('input', (e) => {
+            config.particleCount = parseInt(e.target.value);
+            document.getElementById('countValue').textContent = config.particleCount;
+            initParticles();
+        });
+        
+        document.getElementById('particleSize').addEventListener('input', (e) => {
+            config.particleSize = parseFloat(e.target.value);
+            document.getElementById('sizeValue').textContent = config.particleSize;
+            particles.forEach(p => p.size = config.particleSize + Math.random() * 2);
+        });
+        
+        document.getElementById('connectionDistance').addEventListener('input', (e) => {
+            config.connectionDistance = parseInt(e.target.value);
+            document.getElementById('distanceValue').textContent = config.connectionDistance;
+        });
+        
+        document.getElementById('speedFactor').addEventListener('input', (e) => {
+            config.speedFactor = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = config.speedFactor;
+            particles.forEach(p => {
+                p.speedX = (p.speedX / p.speedFactor) * config.speedFactor;
+                p.speedY = (p.speedY / p.speedFactor) * config.speedFactor;
+                p.speedFactor = config.speedFactor;
+            });
+        });
+        
+        document.getElementById('colorScheme').addEventListener('change', (e) => {
+            config.colorScheme = e.target.value;
+            particles.forEach(p => p.color = p.getColor());
+        });
+        
+        // Preset buttons
+        document.getElementById('densePreset').addEventListener('click', () => {
+            document.getElementById('particleCount').value = 250;
+            document.getElementById('countValue').textContent = '250';
+            document.getElementById('connectionDistance').value = 150;
+            document.getElementById('distanceValue').textContent = '150';
+            document.getElementById('speedFactor').value = 0.8;
+            document.getElementById('speedValue').textContent = '0.8';
+            
+            config.particleCount = 250;
+            config.connectionDistance = 150;
+            config.speedFactor = 0.8;
+            
+            initParticles();
+        });
+        
+        document.getElementById('slowPreset').addEventListener('click', () => {
+            document.getElementById('speedFactor').value = 0.3;
+            document.getElementById('speedValue').textContent = '0.3';
+            document.getElementById('particleSize').value = 3;
+            document.getElementById('sizeValue').textContent = '3';
+            
+            config.speedFactor = 0.3;
+            config.particleSize = 3;
+            
+            particles.forEach(p => {
+                p.speedX = (p.speedX / p.speedFactor) * config.speedFactor;
+                p.speedY = (p.speedY / p.speedFactor) * config.speedFactor;
+                p.speedFactor = config.speedFactor;
+                p.size = config.particleSize + Math.random() * 2;
+            });
+        });
+        
+        document.getElementById('largePreset').addEventListener('click', () => {
+            document.getElementById('particleSize').value = 5;
+            document.getElementById('sizeValue').textContent = '5';
+            document.getElementById('particleCount').value = 50;
+            document.getElementById('countValue').textContent = '50';
+            
+            config.particleCount = 50;
+            config.particleSize = 5;
+            
+            initParticles();
+        });
+        
+        document.getElementById('minimalPreset').addEventListener('click', () => {
+            document.getElementById('particleCount').value = 30;
+            document.getElementById('countValue').textContent = '30';
+            document.getElementById('connectionDistance').value = 80;
+            document.getElementById('distanceValue').textContent = '80';
+            document.getElementById('speedFactor').value = 1.2;
+            document.getElementById('speedValue').textContent = '1.2';
+            
+            config.particleCount = 30;
+            config.connectionDistance = 80;
+            config.speedFactor = 1.2;
+            
+            initParticles();
+        });
+    </script>
+</body>
+</html>
