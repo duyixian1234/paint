@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ubuntu 22.04 LTS</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Ubuntu', 'Segoe UI', sans-serif; user-select: none; }
+
+/* ===== DESKTOP ===== */
+#desktop {
+  width: 100vw; height: 100vh;
+  background: radial-gradient(ellipse at 30% 40%, #5e2c8f 0%, #3b0764 35%, #1a0533 70%, #0f0320 100%);
+  position: relative; overflow: hidden;
+}
+/* Bokeh-like light circles */
+#desktop::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(210,130,255,0.18) 0%, transparent 35%),
+    radial-gradient(circle at 75% 20%, rgba(255,160,220,0.12) 0%, transparent 28%),
+    radial-gradient(circle at 55% 70%, rgba(130,80,200,0.15) 0%, transparent 30%),
+    radial-gradient(circle at 85% 75%, rgba(200,120,255,0.10) 0%, transparent 22%),
+    radial-gradient(circle at 10% 80%, rgba(170,90,230,0.12) 0%, transparent 25%);
+  pointer-events: none;
+}
+
+/* ===== TOP BAR ===== */
+#topbar {
+  position: absolute; top: 0; left: 0; right: 0; height: 28px;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 12px; z-index: 1000; color: #fff; font-size: 13px;
+}
+#topbar-left { display: flex; align-items: center; gap: 10px; }
+#topbar-center { position: absolute; left: 50%; transform: translateX(-50%); font-weight: 500; cursor: pointer; }
+#topbar-right { display: flex; align-items: center; gap: 8px; }
+.tb-icon { cursor: pointer; font-size: 14px; opacity: .85; }
+.tb-icon:hover { opacity: 1; }
+#activities-btn { font-weight: 600; cursor: pointer; padding: 2px 8px; border-radius: 4px; }
+#activities-btn:hover { background: rgba(255,255,255,0.15); }
+#clock { cursor: pointer; font-size: 13px; }
+
+/* ===== DOCK ===== */
+#dock {
+  position: absolute; left: 0; top: 28px; bottom: 0; width: 54px;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(10px);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 10px 0; gap: 4px; z-index: 900;
+}
+.dock-item {
+  width: 42px; height: 42px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; cursor: pointer; transition: transform .15s, background .15s;
+  position: relative;
+}
+.dock-item:hover { transform: scale(1.15); background: rgba(255,255,255,0.15); }
+.dock-item.active::after {
+  content: '';
+  position: absolute; left: -6px; top: 50%; transform: translateY(-50%);
+  width: 4px; height: 24px; background: #fff; border-radius: 2px;
+}
+.dock-sep { width: 30px; height: 1px; background: rgba(255,255,255,0.25); margin: 4px 0; }
+#dock-files-btn { font-size: 20px; }
+
+/* ===== WINDOWS ===== */
+.win {
+  position: absolute; background: #2d2d2d; border-radius: 10px 10px 8px 8px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7); min-width: 320px; min-height: 200px;
+  display: flex; flex-direction: column; z-index: 100; overflow: hidden;
+}
+.win.focused { z-index: 200; box-shadow: 0 10px 50px rgba(0,0,0,0.85); }
+.win.minimized { display: none; }
+
+.win-titlebar {
+  height: 36px; background: #3c3c3c;
+  display: flex; align-items: center; padding: 0 10px; gap: 8px;
+  cursor: move; flex-shrink: 0;
+}
+.win-btn { width: 13px; height: 13px; border-radius: 50%; cursor: pointer; border: none; flex-shrink: 0; }
+.win-btn.close { background: #ff5f57; }
+.win-btn.close:hover { background: #e0443e; }
+.win-btn.minimize { background: #ffbd2e; }
+.win-btn.minimize:hover { background: #e0a220; }
+.win-btn.maximize { background: #28c941; }
+.win-btn.maximize:hover { background: #1aab2c; }
+.win-title { flex: 1; text-align: center; color: #ccc; font-size: 13px; font-weight: 500; pointer-events: none; }
+.win-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+.win-resize {
+  position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; cursor: se-resize;
+  background: transparent;
+}
+
+/* ===== TERMINAL ===== */
+.terminal-body { background: #1a1a2e; color: #e0e0e0; font-family: 'Ubuntu Mono', 'Courier New', monospace; font-size: 13px; padding: 10px; overflow-y: auto; flex: 1; }
+.terminal-output { white-space: pre-wrap; word-break: break-all; }
+.terminal-line { display: flex; align-items: flex-start; margin-top: 2px; }
+.terminal-prompt { color: #7ed321; white-space: pre; flex-shrink: 0; }
+.terminal-input-wrap { display: flex; align-items: center; margin-top: 4px; }
+.terminal-input-prompt { color: #7ed321; flex-shrink: 0; }
+#terminal-input { background: transparent; border: none; outline: none; color: #e0e0e0; font-family: inherit; font-size: 13px; flex: 1; caret-color: #7ed321; }
+.term-err { color: #ff6b6b; }
+.term-info { color: #74c7ec; }
+.term-warn { color: #f9e2af; }
+
+/* ===== FILE MANAGER ===== */
+.fm-toolbar { background: #3a3a3a; padding: 6px 10px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #555; flex-shrink: 0; }
+.fm-toolbar button { background: #555; border: none; color: #ddd; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+.fm-toolbar button:hover { background: #666; }
+.fm-addr { flex: 1; background: #222; border: 1px solid #555; color: #ddd; padding: 3px 8px; border-radius: 4px; font-size: 12px; }
+.fm-layout { display: flex; flex: 1; overflow: hidden; }
+.fm-sidebar { width: 140px; background: #2a2a2a; border-right: 1px solid #444; padding: 8px 0; overflow-y: auto; flex-shrink: 0; }
+.fm-sidebar-item { padding: 6px 12px; color: #bbb; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+.fm-sidebar-item:hover, .fm-sidebar-item.active { background: rgba(237,162,0,0.2); color: #eda200; }
+.fm-content { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 10px; align-content: flex-start; background: #1e1e1e; }
+.fm-item { width: 72px; text-align: center; cursor: pointer; padding: 6px 4px; border-radius: 6px; }
+.fm-item:hover { background: rgba(255,255,255,0.08); }
+.fm-item.selected { background: rgba(237,162,0,0.25); }
+.fm-item-icon { font-size: 32px; display: block; }
+.fm-item-name { font-size: 11px; color: #ccc; margin-top: 4px; word-break: break-word; }
+
+/* ===== TEXT EDITOR ===== */
+.editor-menu { background: #3a3a3a; padding: 4px 8px; display: flex; gap: 4px; border-bottom: 1px solid #555; flex-shrink: 0; }
+.editor-menu-btn { background: transparent; border: none; color: #ccc; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+.editor-menu-btn:hover { background: rgba(255,255,255,0.1); }
+.editor-area { display: flex; flex: 1; overflow: hidden; font-family: 'Ubuntu Mono','Courier New',monospace; font-size: 13px; }
+.editor-linenos { background: #252525; color: #555; text-align: right; padding: 8px 8px; line-height: 1.6; min-width: 40px; border-right: 1px solid #444; overflow: hidden; flex-shrink: 0; user-select: none; }
+.editor-textarea { flex: 1; background: #1e1e1e; color: #e0e0e0; border: none; outline: none; padding: 8px 10px; line-height: 1.6; resize: none; font-family: inherit; font-size: 13px; }
+.editor-statusbar { background: #eda200; color: #1a1a1a; padding: 2px 10px; font-size: 11px; display: flex; gap: 16px; flex-shrink: 0; }
+
+/* ===== CALCULATOR ===== */
+.calc-body { background: #303030; padding: 16px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.calc-display { background: #1e1e1e; width: 100%; border-radius: 6px; padding: 12px 14px; text-align: right; }
+.calc-expr { color: #888; font-size: 13px; min-height: 18px; }
+.calc-num { color: #fff; font-size: 32px; font-weight: 300; min-height: 40px; word-break: break-all; }
+.calc-btns { display: grid; grid-template-columns: repeat(4, 64px); gap: 6px; }
+.calc-btn { height: 52px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: filter .1s; font-family: inherit; }
+.calc-btn:hover { filter: brightness(1.15); }
+.calc-btn:active { filter: brightness(0.85); }
+.calc-op { background: #eda200; color: #fff; font-size: 20px; }
+.calc-num-btn { background: #555; color: #fff; }
+.calc-fn { background: #444; color: #ddd; font-size: 14px; }
+.calc-eq { background: #eda200; color: #fff; font-size: 20px; }
+.calc-zero { grid-column: span 2; width: 100%; }
+
+/* ===== IMAGE VIEWER ===== */
+.imgv-toolbar { background: #3a3a3a; padding: 6px 10px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #555; flex-shrink: 0; }
+.imgv-toolbar button { background: #555; border: none; color: #ddd; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.imgv-toolbar button:hover { background: #666; }
+.imgv-canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; background: #111; overflow: hidden; }
+.imgv-canvas-wrap canvas { max-width: 100%; max-height: 100%; }
+.imgv-statusbar { background: #2a2a2a; color: #888; padding: 3px 10px; font-size: 11px; flex-shrink: 0; }
+
+/* ===== SETTINGS ===== */
+.settings-layout { display: flex; flex: 1; overflow: hidden; }
+.settings-sidebar { width: 190px; background: #252525; border-right: 1px solid #444; overflow-y: auto; flex-shrink: 0; padding: 8px 0; }
+.settings-nav-item { padding: 10px 16px; color: #bbb; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.settings-nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.settings-nav-item.active { background: rgba(237,162,0,0.2); color: #eda200; border-left: 3px solid #eda200; padding-left: 13px; }
+.settings-content { flex: 1; overflow-y: auto; padding: 20px; background: #1e1e1e; color: #ddd; }
+.settings-section { margin-bottom: 24px; }
+.settings-section h3 { font-size: 14px; color: #eda200; margin-bottom: 12px; font-weight: 600; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #333; }
+.settings-row label { font-size: 13px; color: #ccc; }
+.settings-select { background: #444; border: 1px solid #555; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+.settings-toggle { width: 44px; height: 24px; border-radius: 12px; background: #eda200; border: none; cursor: pointer; position: relative; transition: background .2s; }
+.settings-toggle::after { content: ''; position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: right .2s; }
+.settings-toggle.off { background: #555; }
+.settings-toggle.off::after { right: auto; left: 3px; }
+.theme-preview { display: flex; gap: 12px; }
+.theme-swatch { width: 60px; height: 40px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; }
+.theme-swatch.selected { border-color: #eda200; }
+.wallpaper-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+.wp-thumb { width: 80px; height: 52px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
+.wp-thumb.selected { border-color: #eda200; }
+
+/* ===== FIREFOX ===== */
+.browser-toolbar { background: #2b2b2b; padding: 6px 10px; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #111; flex-shrink: 0; }
+.browser-btn { background: transparent; border: none; color: #aaa; font-size: 16px; cursor: pointer; padding: 4px 6px; border-radius: 4px; }
+.browser-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.browser-url { flex: 1; background: #3d3d3d; border: 1px solid #555; color: #ddd; padding: 5px 10px; border-radius: 20px; font-size: 13px; outline: none; }
+.browser-url:focus { border-color: #eda200; }
+.browser-iframe { flex: 1; border: none; background: #fff; }
+.browser-content { flex: 1; background: #fff; overflow-y: auto; }
+.browser-newtab { flex: 1; background: #1e1e1e; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 20px; }
+.browser-newtab h2 { color: #fff; font-size: 22px; margin-bottom: 20px; font-weight: 300; }
+.browser-search-bar { width: 400px; max-width: 90%; background: #333; border: 1px solid #555; color: #fff; padding: 10px 16px; border-radius: 24px; font-size: 15px; outline: none; text-align: center; }
+.browser-search-bar:focus { border-color: #eda200; }
+.browser-shortcuts { display: flex; gap: 16px; margin-top: 30px; flex-wrap: wrap; justify-content: center; }
+.browser-shortcut { width: 80px; text-align: center; cursor: pointer; }
+.browser-shortcut-icon { width: 52px; height: 52px; border-radius: 12px; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+.browser-shortcut-name { font-size: 11px; color: #aaa; }
+
+/* ===== CONTEXT MENU ===== */
+#context-menu {
+  position: fixed; background: #3a3a3a; border: 1px solid #555; border-radius: 8px;
+  padding: 4px 0; min-width: 180px; z-index: 9999; box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  display: none;
+}
+.ctx-item { padding: 8px 16px; color: #ddd; font-size: 13px; cursor: pointer; }
+.ctx-item:hover { background: rgba(237,162,0,0.2); color: #eda200; }
+.ctx-sep { height: 1px; background: #555; margin: 4px 0; }
+
+/* ===== ACTIVITIES OVERLAY ===== */
+#activities-overlay {
+  position: absolute; inset: 28px 0 0 54px;
+  background: rgba(0,0,0,0.88); backdrop-filter: blur(12px);
+  z-index: 800; display: none; flex-direction: column; align-items: center;
+  padding: 30px 20px;
+}
+#activities-overlay.visible { display: flex; }
+#activities-search { width: 360px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 10px 16px; border-radius: 24px; font-size: 15px; outline: none; text-align: center; margin-bottom: 30px; }
+#activities-search:focus { border-color: #eda200; background: rgba(255,255,255,0.15); }
+.activities-grid { display: grid; grid-template-columns: repeat(4, 110px); gap: 20px; }
+.act-app { display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 10px; border-radius: 10px; }
+.act-app:hover { background: rgba(255,255,255,0.1); }
+.act-icon { font-size: 40px; margin-bottom: 6px; }
+.act-name { color: #ddd; font-size: 12px; text-align: center; }
+
+/* ===== NOTIFICATION ===== */
+#notification-area { position: absolute; top: 36px; right: 10px; z-index: 2000; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.notification { background: #3a3a3a; border: 1px solid #555; border-radius: 8px; padding: 10px 14px; max-width: 300px; color: #ddd; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.4); animation: slideIn .3s ease; pointer-events: all; }
+.notif-title { font-weight: 600; color: #fff; margin-bottom: 3px; font-size: 13px; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ===== POWER MENU ===== */
+#power-menu {
+  position: absolute; top: 36px; right: 10px; z-index: 9000;
+  background: #3a3a3a; border: 1px solid #555; border-radius: 10px;
+  padding: 12px; display: none; flex-direction: column; gap: 8px; width: 200px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+#power-menu.visible { display: flex; }
+.pwr-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; cursor: pointer; color: #ddd; font-size: 13px; }
+.pwr-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.pwr-icon { font-size: 18px; }
+
+/* ===== DESKTOP ICONS ===== */
+.desktop-icon {
+  position: absolute; width: 72px; text-align: center; cursor: pointer;
+  padding: 6px 4px; border-radius: 6px;
+}
+.desktop-icon:hover { background: rgba(255,255,255,0.12); }
+.desktop-icon-img { font-size: 36px; display: block; }
+.desktop-icon-label { font-size: 11px; color: #fff; margin-top: 4px; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+</style>
+</head>
+<body>
+<!-- DESKTOP -->
+<div id="desktop">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div id="topbar-left">
+      <span id="activities-btn" onclick="toggleActivities()">Activities</span>
+      <span class="tb-icon" title="Applications" onclick="toggleActivities()">⊞</span>
+    </div>
+    <div id="topbar-center">
+      <span id="clock"></span>
+    </div>
+    <div id="topbar-right">
+      <span class="tb-icon" title="Network">📶</span>
+      <span class="tb-icon" title="Volume">🔊</span>
+      <span class="tb-icon" title="Battery">🔋</span>
+      <span class="tb-icon" id="power-icon" title="Power" onclick="togglePowerMenu()">⏻</span>
+    </div>
+  </div>
+
+  <!-- DOCK -->
+  <div id="dock">
+    <div class="dock-item" title="Files" id="dock-files-btn" onclick="openApp('files')">🗂️</div>
+    <div class="dock-item" title="Firefox" onclick="openApp('firefox')">🦊</div>
+    <div class="dock-item" title="Terminal" onclick="openApp('terminal')">🖥️</div>
+    <div class="dock-item" title="Text Editor" onclick="openApp('editor')">📝</div>
+    <div class="dock-item" title="Calculator" onclick="openApp('calculator')">🧮</div>
+    <div class="dock-item" title="Image Viewer" onclick="openApp('imgviewer')">🖼️</div>
+    <div class="dock-sep"></div>
+    <div class="dock-item" title="Settings" onclick="openApp('settings')">⚙️</div>
+    <div class="dock-sep" style="margin-top:auto"></div>
+    <div class="dock-item" title="Show Desktop" onclick="minimizeAll()">🗔</div>
+  </div>
+
+  <!-- DESKTOP ICONS -->
+  <div class="desktop-icon" style="left:70px;top:40px" ondblclick="openApp('files')" oncontextmenu="ctxDesktopIcon(event,'files')">
+    <span class="desktop-icon-img">🗂️</span>
+    <div class="desktop-icon-label">Home</div>
+  </div>
+  <div class="desktop-icon" style="left:70px;top:130px" ondblclick="openApp('terminal')" oncontextmenu="ctxDesktopIcon(event,'terminal')">
+    <span class="desktop-icon-img">🖥️</span>
+    <div class="desktop-icon-label">Terminal</div>
+  </div>
+  <div class="desktop-icon" style="left:70px;top:220px" ondblclick="openApp('editor')" oncontextmenu="ctxDesktopIcon(event,'editor')">
+    <span class="desktop-icon-img">📝</span>
+    <div class="desktop-icon-label">Text Editor</div>
+  </div>
+
+  <!-- WINDOWS CONTAINER -->
+  <div id="windows-layer"></div>
+
+  <!-- ACTIVITIES OVERLAY -->
+  <div id="activities-overlay">
+    <input id="activities-search" type="text" placeholder="Type to search…" oninput="filterActivities(this.value)">
+    <div class="activities-grid" id="activities-grid"></div>
+  </div>
+
+  <!-- CONTEXT MENU -->
+  <div id="context-menu"></div>
+
+  <!-- NOTIFICATION AREA -->
+  <div id="notification-area"></div>
+
+  <!-- POWER MENU -->
+  <div id="power-menu">
+    <div class="pwr-item" onclick="notify('System','Screen locked')"><span class="pwr-icon">🔒</span> Lock Screen</div>
+    <div class="pwr-item" onclick="notify('System','Logging out…')"><span class="pwr-icon">🚪</span> Log Out</div>
+    <div class="pwr-item" onclick="notify('System','Suspending…')"><span class="pwr-icon">💤</span> Suspend</div>
+    <div class="pwr-item" onclick="notify('System','Restarting…')"><span class="pwr-icon">🔄</span> Restart</div>
+    <div class="pwr-item" onclick="notify('System','Powering off…')"><span class="pwr-icon">⏹️</span> Power Off</div>
+  </div>
+
+</div><!-- /desktop -->
+
+<script>
+/* ===================================================
+   GLOBALS
+=================================================== */
+const APPS = {
+  terminal:   { title:'Terminal',     icon:'🖥️',  w:680, h:440 },
+  files:      { title:'Files',        icon:'🗂️',  w:720, h:480 },
+  editor:     { title:'Text Editor',  icon:'📝',  w:700, h:500 },
+  calculator: { title:'Calculator',   icon:'🧮',  w:310, h:460 },
+  imgviewer:  { title:'Image Viewer', icon:'🖼️',  w:700, h:520 },
+  settings:   { title:'Settings',     icon:'⚙️',  w:750, h:520 },
+  firefox:    { title:'Firefox',      icon:'🦊',  w:800, h:560 },
+};
+let windows = {};   // id -> { el, app, min, max }
+let zTop = 200;
+let winCount = 0;
+let focusedWin = null;
+
+/* ===================================================
+   CLOCK
+=================================================== */
+function updateClock() {
+  const now = new Date();
+  const d = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const t = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('clock').textContent = d + '  ' + t;
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+/* ===================================================
+   WINDOW MANAGEMENT
+=================================================== */
+function openApp(appId) {
+  // If already open, focus it
+  for (let id in windows) {
+    if (windows[id].app === appId) {
+      focusWindow(id);
+      if (windows[id].min) unminimize(id);
+      return;
+    }
+  }
+  createWindow(appId);
+  closeActivities();
+}
+
+function createWindow(appId) {
+  const cfg = APPS[appId];
+  if (!cfg) return;
+  const id = 'win' + (++winCount);
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const left = Math.max(60, Math.floor((vw - cfg.w) / 2) + (winCount % 5) * 20);
+  const top  = Math.max(30, Math.floor((vh - cfg.h) / 2) + (winCount % 5) * 20);
+
+  const el = document.createElement('div');
+  el.className = 'win focused';
+  el.id = id;
+  el.style.left = left + 'px';
+  el.style.top  = top  + 'px';
+  el.style.width  = cfg.w + 'px';
+  el.style.height = cfg.h + 'px';
+  el.style.zIndex = ++zTop;
+
+  el.innerHTML = `
+    <div class="win-titlebar" onmousedown="startDrag(event,'${id}')">
+      <button class="win-btn close"    onclick="closeWin('${id}')"></button>
+      <button class="win-btn minimize" onclick="minimizeWin('${id}')"></button>
+      <button class="win-btn maximize" onclick="toggleMaximize('${id}')"></button>
+      <span class="win-title">${cfg.icon} ${cfg.title}</span>
+    </div>
+    <div class="win-body" id="body-${id}"></div>
+    <div class="win-resize" onmousedown="startResize(event,'${id}')"></div>
+  `;
+  el.addEventListener('mousedown', () => focusWindow(id));
+  document.getElementById('windows-layer').appendChild(el);
+
+  windows[id] = { el, app: appId, min: false, maxed: false, prevRect: null };
+  buildAppContent(id, appId);
+  focusWindow(id);
+  updateDockActive();
+}
+
+function focusWindow(id) {
+  if (focusedWin === id) return;
+  if (focusedWin && windows[focusedWin]) {
+    windows[focusedWin].el.classList.remove('focused');
+  }
+  focusedWin = id;
+  windows[id].el.classList.add('focused');
+  windows[id].el.style.zIndex = ++zTop;
+}
+
+function closeWin(id) {
+  if (!windows[id]) return;
+  windows[id].el.remove();
+  delete windows[id];
+  if (focusedWin === id) focusedWin = null;
+  updateDockActive();
+}
+
+function minimizeWin(id) {
+  windows[id].min = true;
+  windows[id].el.classList.add('minimized');
+  updateDockActive();
+}
+
+function unminimize(id) {
+  windows[id].min = false;
+  windows[id].el.classList.remove('minimized');
+  focusWindow(id);
+  updateDockActive();
+}
+
+function minimizeAll() {
+  for (let id in windows) minimizeWin(id);
+}
+
+function toggleMaximize(id) {
+  const w = windows[id];
+  if (!w) return;
+  if (w.maxed) {
+    const r = w.prevRect;
+    w.el.style.left = r.left; w.el.style.top = r.top;
+    w.el.style.width = r.width; w.el.style.height = r.height;
+    w.maxed = false;
+  } else {
+    w.prevRect = { left: w.el.style.left, top: w.el.style.top, width: w.el.style.width, height: w.el.style.height };
+    w.el.style.left = '54px'; w.el.style.top = '28px';
+    w.el.style.width  = (window.innerWidth  - 54) + 'px';
+    w.el.style.height = (window.innerHeight - 28) + 'px';
+    w.maxed = true;
+  }
+  // trigger resize for canvas-based apps
+  setTimeout(() => { if (w.app === 'imgviewer') redrawViewer(id); }, 50);
+}
+
+function updateDockActive() {
+  const openApps = new Set(Object.values(windows).map(w => w.app));
+  document.querySelectorAll('.dock-item').forEach(el => {
+    const title = el.title.toLowerCase().replace(' ', '');
+    const appMap = { 'files':'files', 'firefox':'firefox', 'terminal':'terminal',
+                     'texteditor':'editor', 'calculator':'calculator',
+                     'imageviewer':'imgviewer', 'settings':'settings' };
+    if (openApps.has(appMap[title])) el.classList.add('active');
+    else el.classList.remove('active');
+  });
+}
+
+/* ===================================================
+   DRAG & RESIZE
+=================================================== */
+let dragging = null, resizing = null, startX, startY, startRect;
+
+function startDrag(e, id) {
+  if (e.target.classList.contains('win-btn')) return;
+  if (windows[id].maxed) return;
+  dragging = id;
+  startX = e.clientX; startY = e.clientY;
+  const el = windows[id].el;
+  startRect = { left: parseInt(el.style.left), top: parseInt(el.style.top) };
+  e.preventDefault();
+}
+
+function startResize(e, id) {
+  resizing = id;
+  startX = e.clientX; startY = e.clientY;
+  const el = windows[id].el;
+  startRect = { w: parseInt(el.style.width), h: parseInt(el.style.height) };
+  e.preventDefault(); e.stopPropagation();
+}
+
+document.addEventListener('mousemove', e => {
+  if (dragging) {
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    const el = windows[dragging].el;
+    const newTop = Math.max(28, startRect.top + dy);
+    el.style.left = (startRect.left + dx) + 'px';
+    el.style.top  = newTop + 'px';
+  }
+  if (resizing) {
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    const el = windows[resizing].el;
+    el.style.width  = Math.max(320, startRect.w + dx) + 'px';
+    el.style.height = Math.max(200, startRect.h + dy) + 'px';
+  }
+});
+document.addEventListener('mouseup', () => { dragging = null; resizing = null; });
+
+/* ===================================================
+   APP BUILDERS
+=================================================== */
+function buildAppContent(winId, appId) {
+  const body = document.getElementById('body-' + winId);
+  switch(appId) {
+    case 'terminal':   buildTerminal(winId, body);    break;
+    case 'files':      buildFiles(winId, body);       break;
+    case 'editor':     buildEditor(winId, body);      break;
+    case 'calculator': buildCalculator(winId, body);  break;
+    case 'imgviewer':  buildImgViewer(winId, body);   break;
+    case 'settings':   buildSettings(winId, body);    break;
+    case 'firefox':    buildFirefox(winId, body);     break;
+  }
+}
+
+/* ===================================================
+   VIRTUAL FILESYSTEM
+=================================================== */
+const FS = {
+  '/': { type:'dir', children:['home','etc','usr','var','tmp'] },
+  '/home': { type:'dir', children:['user'] },
+  '/home/user': { type:'dir', children:['Desktop','Documents','Downloads','Pictures','Music','Videos'] },
+  '/home/user/Desktop': { type:'dir', children:['hello.txt','notes.md'] },
+  '/home/user/Documents': { type:'dir', children:['resume.txt','project.md','todo.txt'] },
+  '/home/user/Downloads': { type:'dir', children:['ubuntu-22.04-iso.torrent','photo.jpg'] },
+  '/home/user/Pictures': { type:'dir', children:['wallpaper.jpg','screenshot.png','cat.jpg'] },
+  '/home/user/Music': { type:'dir', children:['song.mp3'] },
+  '/home/user/Videos': { type:'dir', children:['video.mp4'] },
+  '/etc': { type:'dir', children:['hosts','fstab','passwd','os-release'] },
+  '/usr': { type:'dir', children:['bin','lib','share'] },
+  '/usr/bin': { type:'dir', children:['bash','ls','cat','python3','vim','gcc'] },
+  '/usr/lib': { type:'dir', children:[] },
+  '/usr/share': { type:'dir', children:[] },
+  '/var': { type:'dir', children:['log','tmp'] },
+  '/var/log': { type:'dir', children:['syslog','auth.log'] },
+  '/var/tmp': { type:'dir', children:[] },
+  '/tmp': { type:'dir', children:[] },
+  '/home/user/Desktop/hello.txt': { type:'file', content:'Hello, Ubuntu!\nWelcome to your desktop.\n' },
+  '/home/user/Desktop/notes.md': { type:'file', content:'# My Notes\n\n- Buy groceries\n- Study Linux\n- Read a book\n' },
+  '/home/user/Documents/resume.txt': { type:'file', content:'Name: Ubuntu User\nEmail: user@ubuntu.com\n\nExperience:\n  Software Engineer, 2020-present\n' },
+  '/home/user/Documents/project.md': { type:'file', content:'# Project Plan\n\n## Phase 1\n- Setup environment\n- Write tests\n\n## Phase 2\n- Implement features\n' },
+  '/home/user/Documents/todo.txt': { type:'file', content:'[ ] Read documentation\n[x] Install Ubuntu\n[ ] Configure dotfiles\n' },
+  '/home/user/Downloads/ubuntu-22.04-iso.torrent': { type:'file', content:'(binary torrent file)' },
+  '/home/user/Downloads/photo.jpg': { type:'file', content:'(image data)' },
+  '/home/user/Pictures/wallpaper.jpg': { type:'file', content:'(image data)' },
+  '/home/user/Pictures/screenshot.png': { type:'file', content:'(image data)' },
+  '/home/user/Pictures/cat.jpg': { type:'file', content:'(image data)' },
+  '/home/user/Music/song.mp3': { type:'file', content:'(audio data)' },
+  '/home/user/Videos/video.mp4': { type:'file', content:'(video data)' },
+  '/etc/hosts': { type:'file', content:'127.0.0.1  localhost\n127.0.1.1  ubuntu\n::1        localhost ip6-localhost\n' },
+  '/etc/os-release': { type:'file', content:'PRETTY_NAME="Ubuntu 22.04.3 LTS"\nNAME="Ubuntu"\nVERSION_ID="22.04"\nID=ubuntu\nHOME_URL="https://www.ubuntu.com/"\n' },
+  '/etc/passwd': { type:'file', content:'root:x:0:0:root:/root:/bin/bash\nuser:x:1000:1000:Ubuntu User:/home/user:/bin/bash\n' },
+  '/etc/fstab': { type:'file', content:'# /etc/fstab\nUUID=xxx / ext4 defaults 0 1\n' },
+  '/var/log/syslog': { type:'file', content:'Mar  3 00:00:01 ubuntu kernel: Linux version 5.15.0-91-generic\nMar  3 00:00:02 ubuntu systemd[1]: Started User Manager for UID 1000.\n' },
+  '/var/log/auth.log': { type:'file', content:'Mar  3 00:00:05 ubuntu login[1234]: pam_unix: session opened for user user\n' },
+};
+
+function fsResolve(cwd, path) {
+  if (path.startsWith('/')) return path.replace(/\/+$/, '') || '/';
+  const parts = (cwd + '/' + path).split('/').filter(p => p && p !== '.');
+  const stack = [];
+  for (const p of parts) { if (p === '..') stack.pop(); else stack.push(p); }
+  return '/' + stack.join('/');
+}
+
+function fsLs(cwd, args) {
+  const p = args[0] ? fsResolve(cwd, args[0]) : cwd;
+  const node = FS[p];
+  if (!node) return { err: `ls: cannot access '${p}': No such file or directory` };
+  if (node.type === 'file') return { out: p.split('/').pop() };
+  return { out: node.children.join('  ') };
+}
+
+/* ===================================================
+   TERMINAL
+=================================================== */
+function buildTerminal(winId, body) {
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+  const state = { cwd: '/home/user', history: [], histIdx: -1, env: { USER:'user', HOME:'/home/user', SHELL:'/bin/bash' } };
+
+  body.innerHTML = `
+    <div class="terminal-body" id="tterm-${winId}">
+      <div class="term-info">Ubuntu 22.04.3 LTS — bash 5.1.16</div>
+      <div class="term-info">Type <b>help</b> for available commands.</div>
+      <div id="tterm-out-${winId}"></div>
+      <div class="terminal-input-wrap">
+        <span class="terminal-input-prompt" id="tterm-prompt-${winId}"></span>
+        <input id="tterm-in-${winId}" class="terminal-input" type="text" spellcheck="false" autocomplete="off">
+      </div>
+    </div>`;
+
+  function prompt() { return `<span style="color:#c792ea">user@ubuntu</span>:<span style="color:#82aaff">${state.cwd.replace('/home/user','~')}</span>$ `; }
+
+  const promptEl = document.getElementById('tterm-prompt-' + winId);
+  promptEl.innerHTML = prompt();
+
+  const input  = document.getElementById('tterm-in-' + winId);
+  const outDiv = document.getElementById('tterm-out-' + winId);
+  const tBody  = document.getElementById('tterm-' + winId);
+
+  input.focus();
+  body.addEventListener('click', () => input.focus());
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const cmd = input.value.trim();
+      // echo line
+      const line = document.createElement('div');
+      line.className = 'terminal-line';
+      line.innerHTML = prompt() + escHtml(cmd);
+      outDiv.appendChild(line);
+      if (cmd) { state.history.unshift(cmd); state.histIdx = -1; }
+      const result = runCmd(cmd, state);
+      if (result) {
+        const res = document.createElement('div');
+        res.className = result.err ? 'terminal-output term-err' : 'terminal-output';
+        res.innerHTML = result.err ? escHtml(result.err) : (result.html || escHtml(result.out || ''));
+        outDiv.appendChild(res);
+      }
+      input.value = '';
+      promptEl.innerHTML = prompt();
+      tBody.scrollTop = tBody.scrollHeight;
+    } else if (e.key === 'ArrowUp') {
+      state.histIdx = Math.min(state.histIdx + 1, state.history.length - 1);
+      input.value = state.history[state.histIdx] || '';
+      e.preventDefault();
+    } else if (e.key === 'ArrowDown') {
+      state.histIdx = Math.max(state.histIdx - 1, -1);
+      input.value = state.histIdx >= 0 ? state.history[state.histIdx] : '';
+      e.preventDefault();
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      autocomplete(input, state);
+    } else if (e.key === 'l' && e.ctrlKey) {
+      outDiv.innerHTML = '';
+      e.preventDefault();
+    }
+  });
+}
+
+function autocomplete(input, state) {
+  const val = input.value;
+  const tokens = val.split(/\s+/);
+  const last = tokens[tokens.length - 1];
+  if (!last) return;
+  const dir = last.includes('/') ? fsResolve(state.cwd, last.substring(0, last.lastIndexOf('/')+1)) : state.cwd;
+  const prefix = last.includes('/') ? last.substring(last.lastIndexOf('/')+1) : last;
+  const node = FS[dir];
+  if (!node || node.type !== 'dir') return;
+  const matches = node.children.filter(c => c.startsWith(prefix));
+  if (matches.length === 1) {
+    tokens[tokens.length-1] = (last.includes('/') ? last.substring(0,last.lastIndexOf('/')+1) : '') + matches[0];
+    input.value = tokens.join(' ');
+  }
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function runCmd(raw, state) {
+  if (!raw) return null;
+  const parts = raw.match(/"[^"]*"|'[^']*'|\S+/g) || [];
+  const cmd = parts[0]; const args = parts.slice(1).map(a => a.replace(/^["']|["']$/g,''));
+  switch(cmd) {
+    case 'help': return { html: `<span class="term-info">Available commands:</span>\n  <b>ls</b> [path]   — list directory\n  <b>cd</b> [path]   — change directory\n  <b>pwd</b>         — print working directory\n  <b>cat</b> &lt;file&gt;  — show file contents\n  <b>echo</b> &lt;text&gt; — print text\n  <b>mkdir</b> &lt;dir&gt; — create directory\n  <b>touch</b> &lt;file&gt;— create empty file\n  <b>rm</b> &lt;path&gt;   — remove file/directory\n  <b>clear</b>        — clear terminal (Ctrl+L)\n  <b>date</b>         — show date/time\n  <b>whoami</b>       — print current user\n  <b>uname</b> [-a]   — system information\n  <b>df</b> [-h]      — disk usage\n  <b>free</b> [-h]    — memory usage\n  <b>ps</b>           — process list\n  <b>env</b>          — environment variables\n  <b>history</b>      — command history\n  <b>neofetch</b>     — system info (fancy)` };
+    case 'pwd': return { out: state.cwd };
+    case 'whoami': return { out: state.env.USER };
+    case 'date': return { out: new Date().toString() };
+    case 'clear': return { clear: true, out: '' };
+    case 'echo': return { out: args.map(a => a.replace(/\$(\w+)/g, (m,k) => state.env[k] || '')).join(' ') };
+    case 'env': return { out: Object.entries(state.env).map(([k,v])=>`${k}=${v}`).join('\n') };
+    case 'uname': {
+      if (args.includes('-a')) return { out: 'Linux ubuntu 5.15.0-91-generic #101-Ubuntu SMP x86_64 GNU/Linux' };
+      return { out: 'Linux' };
+    }
+    case 'df': return { out: 'Filesystem      Size  Used Avail Use% Mounted on\n/dev/sda1        50G   12G   36G  25% /\ntmpfs           3.9G     0  3.9G   0% /dev/shm' };
+    case 'free': return { out: '               total        used        free\nMem:         8192000     2304512     5887488\nSwap:        2097152           0     2097152' };
+    case 'ps': return { out: '  PID TTY          TIME CMD\n    1 ?        00:00:01 systemd\n  512 ?        00:00:00 bash\n  513 ?        00:00:00 ps' };
+    case 'history': return { out: state.history.map((c,i)=>`  ${state.history.length-i}  ${c}`).join('\n') };
+    case 'ls': {
+      const r = fsLs(state.cwd, args);
+      if (r.err) return { err: r.err };
+      const p = args[0] ? fsResolve(state.cwd, args[0]) : state.cwd;
+      const node = FS[p];
+      if (node && node.type === 'dir') {
+        const html = node.children.map(c => {
+          const fp = (p==='/'?'':p)+'/'+c;
+          const isDir = FS[fp] && FS[fp].type==='dir';
+          return isDir ? `<span style="color:#82aaff;font-weight:600">${escHtml(c)}</span>` : `<span>${escHtml(c)}</span>`;
+        }).join('  ');
+        return { html };
+      }
+      return { out: r.out };
+    }
+    case 'cd': {
+      const dest = args[0] || state.env.HOME;
+      const target = dest === '~' ? state.env.HOME : fsResolve(state.cwd, dest);
+      const node = FS[target];
+      if (!node) return { err: `bash: cd: ${dest}: No such file or directory` };
+      if (node.type !== 'dir') return { err: `bash: cd: ${dest}: Not a directory` };
+      state.cwd = target;
+      return null;
+    }
+    case 'cat': {
+      if (!args[0]) return { err: 'cat: missing operand' };
+      const p = fsResolve(state.cwd, args[0]);
+      const node = FS[p];
+      if (!node) return { err: `cat: ${args[0]}: No such file or directory` };
+      if (node.type === 'dir') return { err: `cat: ${args[0]}: Is a directory` };
+      return { out: node.content };
+    }
+    case 'mkdir': {
+      if (!args[0]) return { err: 'mkdir: missing operand' };
+      const p = fsResolve(state.cwd, args[0]);
+      if (FS[p]) return { err: `mkdir: cannot create directory '${args[0]}': File exists` };
+      const parent = p.substring(0, p.lastIndexOf('/')) || '/';
+      const name = p.split('/').pop();
+      if (!FS[parent] || FS[parent].type !== 'dir') return { err: `mkdir: cannot create directory '${args[0]}': No such file or directory` };
+      FS[parent].children.push(name);
+      FS[p] = { type:'dir', children:[] };
+      return null;
+    }
+    case 'touch': {
+      if (!args[0]) return { err: 'touch: missing file operand' };
+      const p = fsResolve(state.cwd, args[0]);
+      if (!FS[p]) {
+        const parent = p.substring(0, p.lastIndexOf('/')) || '/';
+        const name = p.split('/').pop();
+        if (FS[parent]) { FS[parent].children.push(name); FS[p] = { type:'file', content:'' }; }
+      }
+      return null;
+    }
+    case 'rm': {
+      if (!args[0]) return { err: 'rm: missing operand' };
+      const p = fsResolve(state.cwd, args[0]);
+      if (!FS[p]) return { err: `rm: cannot remove '${args[0]}': No such file or directory` };
+      if (FS[p].type === 'dir' && !args.includes('-r') && !args.includes('-rf')) return { err: `rm: cannot remove '${args[0]}': Is a directory (use -r)` };
+      const parent = p.substring(0, p.lastIndexOf('/')) || '/';
+      const name = p.split('/').pop();
+      if (FS[parent]) FS[parent].children = FS[parent].children.filter(c => c !== name);
+      delete FS[p];
+      return null;
+    }
+    case 'neofetch': return { html: `<pre style="color:#c792ea">        _
+      _/ /_     <b style="color:#fff">user@ubuntu</b>
+    _/ // /    <span style="color:#aaa">-----------</span>
+   /_  // /    <span style="color:#aaa">OS:</span> Ubuntu 22.04.3 LTS x86_64
+    /_// /     <span style="color:#aaa">Kernel:</span> 5.15.0-91-generic
+      /_/      <span style="color:#aaa">Shell:</span> bash 5.1.16
+               <span style="color:#aaa">Resolution:</span> ${window.innerWidth}x${window.innerHeight}
+               <span style="color:#aaa">CPU:</span> Intel Core i7-12700K
+               <span style="color:#aaa">Memory:</span> 2.2GiB / 8.0GiB
+</pre>` };
+    case 'python3': return { out: 'Python 3.10.12 (main, Nov 20 2023)\nType "help" for more information.' };
+    case 'vim': case 'nano': return { out: `(${cmd} — text editor not available in web terminal, use Text Editor app)` };
+    case 'sudo': return { out: '[sudo] password for user: \n(simulated — sudo: this is a web terminal)' };
+    case 'apt': {
+      if (args[0]==='update') return { out: 'Hit:1 http://archive.ubuntu.com/ubuntu jammy InRelease\nReading package lists... Done' };
+      if (args[0]==='upgrade') return { out: '0 upgraded, 0 newly installed, 0 to remove.' };
+      return { out: 'apt: Use apt install <pkg>, apt update, apt upgrade, apt list' };
+    }
+    case 'git': return { out: 'usage: git [--version] [--help] <command> [<args>]' };
+    default: return { err: `${cmd}: command not found` };
+  }
+}
+
+/* ===================================================
+   FILE MANAGER
+=================================================== */
+function buildFiles(winId, body) {
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+  const state = { cwd: '/home/user', selected: null };
+
+  body.innerHTML = `
+    <div class="fm-toolbar">
+      <button onclick="fmBack('${winId}')">◀</button>
+      <button onclick="fmUp('${winId}')">▲</button>
+      <button onclick="fmHome('${winId}')">🏠</button>
+      <input class="fm-addr" id="fm-addr-${winId}" value="${state.cwd}" onkeydown="if(event.key==='Enter')fmGo('${winId}')">
+      <button onclick="fmGo('${winId}')">Go</button>
+    </div>
+    <div class="fm-layout">
+      <div class="fm-sidebar" id="fm-sidebar-${winId}"></div>
+      <div class="fm-content" id="fm-content-${winId}"></div>
+    </div>`;
+
+  windows[winId].fmState = { cwd: '/home/user', history: ['/home/user'], histIdx: 0, selected: null };
+  renderFM(winId);
+}
+
+function renderFM(winId) {
+  const st = windows[winId].fmState;
+  const sidebar = document.getElementById('fm-sidebar-' + winId);
+  const content = document.getElementById('fm-content-' + winId);
+  const addr    = document.getElementById('fm-addr-'    + winId);
+  if (!sidebar) return;
+
+  addr.value = st.cwd;
+
+  const places = [
+    ['🏠', 'Home',      '/home/user'],
+    ['🖥️', 'Desktop',   '/home/user/Desktop'],
+    ['📄', 'Documents', '/home/user/Documents'],
+    ['⬇️', 'Downloads', '/home/user/Downloads'],
+    ['🖼️', 'Pictures',  '/home/user/Pictures'],
+    ['🎵', 'Music',     '/home/user/Music'],
+    ['🎬', 'Videos',    '/home/user/Videos'],
+    ['💾', 'Filesystem','/'],
+  ];
+  sidebar.innerHTML = places.map(([icon,label,path]) =>
+    `<div class="fm-sidebar-item${st.cwd===path?' active':''}" onclick="fmNavigate('${winId}','${path}')">${icon} ${label}</div>`
+  ).join('');
+
+  const node = FS[st.cwd];
+  if (!node || node.type !== 'dir') { content.innerHTML = '<div style="color:#888;padding:20px">Directory not found</div>'; return; }
+
+  if (node.children.length === 0) {
+    content.innerHTML = '<div style="color:#888;padding:20px;font-size:13px">Empty folder</div>';
+    return;
+  }
+
+  const fileIcons = { txt:'📄', md:'📄', jpg:'🖼️', png:'🖼️', mp3:'🎵', mp4:'🎬', torrent:'📦', iso:'💿', pdf:'📑', default:'📄' };
+  content.innerHTML = node.children.map(name => {
+    const fp = (st.cwd==='/'?'':st.cwd)+'/'+name;
+    const child = FS[fp];
+    const isDir = child && child.type === 'dir';
+    const ext = name.includes('.') ? name.split('.').pop() : '';
+    const icon = isDir ? '📁' : (fileIcons[ext] || fileIcons.default);
+    return `<div class="fm-item${st.selected===fp?' selected':''}" 
+      onclick="fmSelect('${winId}','${fp}')" 
+      ondblclick="${isDir ? `fmNavigate('${winId}','${fp}')` : `fmOpenFile('${winId}','${fp}')`}">
+      <span class="fm-item-icon">${icon}</span>
+      <div class="fm-item-name">${escHtml(name)}</div>
+    </div>`;
+  }).join('');
+}
+
+function fmSelect(winId, path) {
+  windows[winId].fmState.selected = path;
+  renderFM(winId);
+}
+function fmNavigate(winId, path) {
+  const st = windows[winId].fmState;
+  st.history = st.history.slice(0, st.histIdx + 1);
+  st.history.push(path);
+  st.histIdx = st.history.length - 1;
+  st.cwd = path;
+  st.selected = null;
+  renderFM(winId);
+}
+function fmBack(winId) {
+  const st = windows[winId].fmState;
+  if (st.histIdx > 0) { st.histIdx--; st.cwd = st.history[st.histIdx]; renderFM(winId); }
+}
+function fmUp(winId) {
+  const st = windows[winId].fmState;
+  const parent = st.cwd.substring(0, st.cwd.lastIndexOf('/')) || '/';
+  fmNavigate(winId, parent);
+}
+function fmHome(winId) { fmNavigate(winId, '/home/user'); }
+function fmGo(winId) {
+  const addr = document.getElementById('fm-addr-' + winId);
+  fmNavigate(winId, addr.value.trim());
+}
+function fmOpenFile(winId, path) {
+  const node = FS[path];
+  if (!node || node.type !== 'file') return;
+  const ext = path.split('.').pop().toLowerCase();
+  if (['jpg','png','jpeg','gif'].includes(ext)) { openApp('imgviewer'); return; }
+  openApp('editor');
+  // populate editor with file content after a tick
+  setTimeout(() => {
+    for (let id in windows) {
+      if (windows[id].app === 'editor') {
+        const ta = document.querySelector('#body-' + id + ' .editor-textarea');
+        if (ta) { ta.value = node.content; updateLineNos(id); }
+        break;
+      }
+    }
+  }, 80);
+}
+
+/* ===================================================
+   TEXT EDITOR
+=================================================== */
+function buildEditor(winId, body) {
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+  body.innerHTML = `
+    <div class="editor-menu">
+      <button class="editor-menu-btn" onclick="editorNew('${winId}')">New</button>
+      <button class="editor-menu-btn" onclick="editorOpen('${winId}')">Open…</button>
+      <button class="editor-menu-btn" onclick="editorSave('${winId}')">Save</button>
+      <button class="editor-menu-btn" onclick="editorSaveAs('${winId}')">Save As…</button>
+    </div>
+    <div class="editor-area">
+      <div class="editor-linenos" id="ed-ln-${winId}">1</div>
+      <textarea class="editor-textarea" id="ed-ta-${winId}" spellcheck="false"
+        placeholder="Start typing…" oninput="updateLineNos('${winId}')" onscroll="syncLineScroll('${winId}')"></textarea>
+    </div>
+    <div class="editor-statusbar">
+      <span id="ed-pos-${winId}">Ln 1, Col 1</span>
+      <span>UTF-8</span><span>Plain Text</span>
+    </div>`;
+
+  const ta = document.getElementById('ed-ta-' + winId);
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Tab') { e.preventDefault(); const s=ta.selectionStart; ta.setRangeText('  ',s,s,'end'); }
+    updateLineNos(winId);
+  });
+  ta.addEventListener('click', () => updateCursorPos(winId));
+  ta.addEventListener('keyup', () => updateCursorPos(winId));
+  updateLineNos(winId);
+}
+
+function updateLineNos(winId) {
+  const ta = document.getElementById('ed-ta-' + winId);
+  const ln = document.getElementById('ed-ln-' + winId);
+  if (!ta || !ln) return;
+  const lines = ta.value.split('\n').length;
+  ln.textContent = Array.from({length: lines}, (_,i) => i+1).join('\n');
+}
+function syncLineScroll(winId) {
+  const ta = document.getElementById('ed-ta-' + winId);
+  const ln = document.getElementById('ed-ln-' + winId);
+  if (ta && ln) ln.scrollTop = ta.scrollTop;
+}
+function updateCursorPos(winId) {
+  const ta = document.getElementById('ed-ta-' + winId);
+  const pos = document.getElementById('ed-pos-' + winId);
+  if (!ta || !pos) return;
+  const text = ta.value.substring(0, ta.selectionStart);
+  const lines = text.split('\n');
+  pos.textContent = `Ln ${lines.length}, Col ${lines[lines.length-1].length+1}`;
+}
+function editorNew(winId) {
+  const ta = document.getElementById('ed-ta-' + winId);
+  if (ta) { ta.value = ''; updateLineNos(winId); }
+}
+function editorOpen(winId) {
+  const file = prompt('Open file path (e.g. /home/user/Documents/todo.txt):');
+  if (!file) return;
+  const node = FS[file.trim()];
+  if (!node || node.type !== 'file') { alert('File not found: ' + file); return; }
+  const ta = document.getElementById('ed-ta-' + winId);
+  if (ta) { ta.value = node.content; updateLineNos(winId); }
+}
+function editorSave(winId) { notify('Text Editor', 'File saved (simulated)'); }
+function editorSaveAs(winId) {
+  const path = prompt('Save as:', '/home/user/Documents/untitled.txt');
+  if (path) notify('Text Editor', 'Saved to ' + path + ' (simulated)');
+}
+
+/* ===================================================
+   CALCULATOR
+=================================================== */
+function buildCalculator(winId, body) {
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+  const state = { expr: '', result: '0', lastOp: false };
+
+  body.innerHTML = `
+    <div class="calc-body" id="calc-${winId}">
+      <div class="calc-display">
+        <div class="calc-expr" id="calc-expr-${winId}"></div>
+        <div class="calc-num"  id="calc-num-${winId}">0</div>
+      </div>
+      <div class="calc-btns">
+        ${calcBtn('AC','calc-fn',winId)} ${calcBtn('±','calc-fn',winId)} ${calcBtn('%','calc-fn',winId)} ${calcBtn('÷','calc-op',winId)}
+        ${calcBtn('7','calc-num-btn',winId)} ${calcBtn('8','calc-num-btn',winId)} ${calcBtn('9','calc-num-btn',winId)} ${calcBtn('×','calc-op',winId)}
+        ${calcBtn('4','calc-num-btn',winId)} ${calcBtn('5','calc-num-btn',winId)} ${calcBtn('6','calc-num-btn',winId)} ${calcBtn('−','calc-op',winId)}
+        ${calcBtn('1','calc-num-btn',winId)} ${calcBtn('2','calc-num-btn',winId)} ${calcBtn('3','calc-num-btn',winId)} ${calcBtn('+','calc-op',winId)}
+        ${calcBtn('0','calc-num-btn calc-zero',winId)} ${calcBtn('.','calc-num-btn',winId)} ${calcBtn('=','calc-eq',winId)}
+      </div>
+    </div>`;
+
+  windows[winId].calcState = { display: '0', expr: '', fresh: true };
+}
+
+function calcBtn(label, cls, winId) {
+  return `<button class="calc-btn ${cls}" onclick="calcPress('${winId}','${label}')">${label}</button>`;
+}
+
+function calcPress(winId, key) {
+  const s = windows[winId].calcState;
+  const numEl  = document.getElementById('calc-num-'  + winId);
+  const exprEl = document.getElementById('calc-expr-' + winId);
+  if (!numEl) return;
+
+  if (key === 'AC') { s.display = '0'; s.expr = ''; s.fresh = true; }
+  else if (key === '±') { s.display = s.display.startsWith('-') ? s.display.slice(1) : '-' + s.display; }
+  else if (key === '%') { s.display = String(parseFloat(s.display) / 100); }
+  else if (key === '=') {
+    try {
+      const raw = s.expr + s.display;
+      const safe = raw.replace(/÷/g,'/').replace(/×/g,'*').replace(/−/g,'-');
+      exprEl.textContent = raw + ' =';
+      s.display = String(Function('"use strict";return (' + safe + ')')());
+      s.expr = ''; s.fresh = true;
+    } catch { s.display = 'Error'; s.expr = ''; s.fresh = true; }
+  } else if (['÷','×','−','+'].includes(key)) {
+    s.expr += s.display + ' ' + key + ' ';
+    exprEl.textContent = s.expr;
+    s.fresh = true;
+  } else {
+    if (key === '.' && s.display.includes('.')) { /* skip */ }
+    else if (s.fresh) { s.display = (key === '.' ? '0.' : key); s.fresh = false; }
+    else { if (s.display.replace('-','').length < 12) s.display += key; }
+  }
+  numEl.textContent = s.display;
+}
+
+/* ===================================================
+   IMAGE VIEWER
+=================================================== */
+const imgViewerImages = [
+  { name:'Landscape', draw: (ctx,w,h) => {
+    const sky=ctx.createLinearGradient(0,0,0,h*0.6);
+    sky.addColorStop(0,'#1a6dbf'); sky.addColorStop(1,'#7ecbf5');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,w,h*0.6);
+    ctx.fillStyle='#4a9e3f'; ctx.fillRect(0,h*0.6,w,h*0.4);
+    ctx.fillStyle='#ffe066'; ctx.beginPath(); ctx.arc(w*0.8,h*0.15,50,0,2*Math.PI); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.7)';
+    [[0.2,0.15],[0.45,0.08],[0.6,0.2]].forEach(([cx,cy])=>{ctx.beginPath();ctx.ellipse(cx*w,cy*h,60,30,0,0,2*Math.PI);ctx.fill();});
+    ctx.fillStyle='#2d6e25';
+    for(let i=0;i<8;i++){ctx.beginPath();ctx.moveTo(i*w/7,h);ctx.lineTo(i*w/7-20,h*0.55);ctx.lineTo(i*w/7+20,h*0.55);ctx.fill();}
+  }},
+  { name:'Abstract', draw: (ctx,w,h) => {
+    const cols=['#e84393','#eda200','#3b82f6','#10b981','#f59e0b','#8b5cf6'];
+    for(let i=0;i<60;i++){
+      ctx.fillStyle=cols[i%cols.length]+(Math.floor(Math.random()*80+50).toString(16));
+      ctx.beginPath(); ctx.arc(Math.random()*w,Math.random()*h,Math.random()*60+10,0,2*Math.PI); ctx.fill();
+    }
+  }},
+  { name:'Geometry', draw: (ctx,w,h) => {
+    ctx.fillStyle='#1e1e2e'; ctx.fillRect(0,0,w,h);
+    const colors=['#cba6f7','#f38ba8','#fab387','#a6e3a1','#89dceb','#89b4fa'];
+    for(let i=0;i<20;i++){
+      ctx.strokeStyle=colors[i%colors.length]; ctx.lineWidth=2;
+      const x=Math.random()*w,y=Math.random()*h,r=Math.random()*80+20;
+      ctx.beginPath(); ctx.rect(x-r/2,y-r/2,r,r); ctx.stroke();
+    }
+    for(let i=0;i<15;i++){
+      ctx.strokeStyle=colors[(i+3)%colors.length]; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(Math.random()*w,Math.random()*h,Math.random()*60+10,0,2*Math.PI); ctx.stroke();
+    }
+  }},
+  { name:'Ubuntu Logo', draw: (ctx,w,h) => {
+    ctx.fillStyle='#5e2c8f'; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='#eda200'; ctx.beginPath(); ctx.arc(w/2,h/2,80,0,2*Math.PI); ctx.fill();
+    ctx.fillStyle='#5e2c8f'; ctx.beginPath(); ctx.arc(w/2,h/2,50,0,2*Math.PI); ctx.fill();
+    ctx.fillStyle='#eda200';
+    for(let i=0;i<3;i++){
+      const a=i*(2*Math.PI/3)-Math.PI/6;
+      const cx=w/2+110*Math.cos(a), cy=h/2+110*Math.sin(a);
+      ctx.beginPath(); ctx.arc(cx,cy,22,0,2*Math.PI); ctx.fill();
+    }
+    ctx.fillStyle='#fff'; ctx.font='bold 20px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('Ubuntu 22.04', w/2, h/2+120);
+  }},
+];
+
+function buildImgViewer(winId, body) {
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+  windows[winId].ivState = { idx: 0, zoom: 1 };
+
+  body.innerHTML = `
+    <div class="imgv-toolbar">
+      <button onclick="ivPrev('${winId}')">❮</button>
+      <button onclick="ivNext('${winId}')">❯</button>
+      <button onclick="ivZoomIn('${winId}')">🔍+</button>
+      <button onclick="ivZoomOut('${winId}')">🔍−</button>
+      <button onclick="ivFit('${winId}')">⊡ Fit</button>
+      <span style="color:#aaa;font-size:12px;margin-left:8px" id="iv-name-${winId}"></span>
+    </div>
+    <div class="imgv-canvas-wrap" id="iv-wrap-${winId}">
+      <canvas id="iv-canvas-${winId}"></canvas>
+    </div>
+    <div class="imgv-statusbar" id="iv-status-${winId}"></div>`;
+
+  redrawViewer(winId);
+}
+
+function redrawViewer(winId) {
+  const st = windows[winId].ivState;
+  const canvas = document.getElementById('iv-canvas-' + winId);
+  const wrap   = document.getElementById('iv-wrap-'   + winId);
+  const nameEl = document.getElementById('iv-name-'   + winId);
+  const statEl = document.getElementById('iv-status-' + winId);
+  if (!canvas || !wrap) return;
+  const img = imgViewerImages[st.idx];
+  const W = 600, H = 400;
+  canvas.width = W; canvas.height = H;
+  canvas.style.transform = `scale(${st.zoom})`;
+  canvas.style.transformOrigin = 'center center';
+  const ctx = canvas.getContext('2d');
+  img.draw(ctx, W, H);
+  if (nameEl) nameEl.textContent = img.name;
+  if (statEl) statEl.textContent = `${img.name} — ${W}×${H}px — ${Math.round(st.zoom*100)}%`;
+}
+
+function ivPrev(winId) { const s=windows[winId].ivState; s.idx=(s.idx-1+imgViewerImages.length)%imgViewerImages.length; redrawViewer(winId); }
+function ivNext(winId) { const s=windows[winId].ivState; s.idx=(s.idx+1)%imgViewerImages.length; redrawViewer(winId); }
+function ivZoomIn(winId)  { windows[winId].ivState.zoom=Math.min(3,windows[winId].ivState.zoom+0.25); redrawViewer(winId); }
+function ivZoomOut(winId) { windows[winId].ivState.zoom=Math.max(0.25,windows[winId].ivState.zoom-0.25); redrawViewer(winId); }
+function ivFit(winId) { windows[winId].ivState.zoom=1; redrawViewer(winId); }
+
+/* ===================================================
+   SETTINGS
+=================================================== */
+function buildSettings(winId, body) {
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+  windows[winId].settingsPage = 'appearance';
+  body.innerHTML = `
+    <div class="settings-layout">
+      <div class="settings-sidebar" id="set-nav-${winId}"></div>
+      <div class="settings-content" id="set-con-${winId}"></div>
+    </div>`;
+  renderSettings(winId);
+}
+
+const settingsPages = [
+  ['🎨','Appearance','appearance'],
+  ['🖥️','Displays','displays'],
+  ['📶','Network','network'],
+  ['🔊','Sound','sound'],
+  ['⚡','Power','power'],
+  ['🖨️','Printers','printers'],
+  ['🖱️','Mouse','mouse'],
+  ['⌨️','Keyboard','keyboard'],
+  ['👤','Users','users'],
+  ['ℹ️','About','about'],
+];
+
+function renderSettings(winId) {
+  const page = windows[winId].settingsPage;
+  const nav = document.getElementById('set-nav-' + winId);
+  const con = document.getElementById('set-con-' + winId);
+  if (!nav) return;
+
+  nav.innerHTML = settingsPages.map(([icon,label,id]) =>
+    `<div class="settings-nav-item${page===id?' active':''}" onclick="setPage('${winId}','${id}')">${icon} ${label}</div>`
+  ).join('');
+
+  const pages = {
+    appearance: `
+      <div class="settings-section">
+        <h3>Appearance</h3>
+        <div class="settings-row"><label>Style</label>
+          <div class="theme-preview">
+            <div class="theme-swatch selected" style="background:#2d2d2d" title="Dark">Dark</div>
+            <div class="theme-swatch" style="background:#f0f0f0;color:#333" title="Light">Light</div>
+          </div>
+        </div>
+        <div class="settings-row"><label>Accent Color</label>
+          <div style="display:flex;gap:6px">
+            ${['#eda200','#3b82f6','#10b981','#f43f5e','#8b5cf6'].map(c=>`<div style="width:22px;height:22px;border-radius:50%;background:${c};cursor:pointer;border:2px solid #666"></div>`).join('')}
+          </div>
+        </div>
+        <div class="settings-row"><label>Wallpaper</label>
+          <div class="wallpaper-grid">
+            <div class="wp-thumb selected" style="background:radial-gradient(ellipse,#5e2c8f,#0f0320)"></div>
+            <div class="wp-thumb" style="background:linear-gradient(135deg,#667eea,#764ba2)"></div>
+            <div class="wp-thumb" style="background:linear-gradient(135deg,#f093fb,#f5576c)"></div>
+            <div class="wp-thumb" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"></div>
+          </div>
+        </div>
+        <div class="settings-row"><label>Text Size</label>
+          <select class="settings-select"><option>Small</option><option selected>Medium</option><option>Large</option></select>
+        </div>
+      </div>`,
+    displays: `
+      <div class="settings-section">
+        <h3>Displays</h3>
+        <div class="settings-row"><label>Resolution</label>
+          <select class="settings-select"><option>1920×1080</option><option selected>Current (${window.innerWidth}×${window.innerHeight})</option></select>
+        </div>
+        <div class="settings-row"><label>Refresh Rate</label>
+          <select class="settings-select"><option>60 Hz</option><option selected>120 Hz</option></select>
+        </div>
+        <div class="settings-row"><label>Night Light</label>
+          <button class="settings-toggle off" onclick="this.classList.toggle('off')"></button>
+        </div>
+        <div class="settings-row"><label>Scale</label>
+          <select class="settings-select"><option>100%</option><option selected>125%</option><option>150%</option><option>200%</option></select>
+        </div>
+      </div>`,
+    network: `
+      <div class="settings-section">
+        <h3>Network</h3>
+        <div class="settings-row"><label>Wi-Fi</label>
+          <button class="settings-toggle" onclick="this.classList.toggle('off')"></button>
+        </div>
+        <div class="settings-row"><label>Connected to</label><span style="color:#10b981">UbuntuNet-5G</span></div>
+        <div class="settings-row"><label>IP Address</label><span style="color:#aaa">192.168.1.42</span></div>
+        <div class="settings-row"><label>Airplane Mode</label>
+          <button class="settings-toggle off" onclick="this.classList.toggle('off')"></button>
+        </div>
+        <div class="settings-row"><label>VPN</label>
+          <button class="settings-toggle off" onclick="this.classList.toggle('off')"></button>
+        </div>
+      </div>`,
+    sound: `
+      <div class="settings-section">
+        <h3>Sound</h3>
+        <div class="settings-row"><label>Output Volume</label>
+          <input type="range" min="0" max="100" value="75" style="width:150px">
+        </div>
+        <div class="settings-row"><label>Input Volume</label>
+          <input type="range" min="0" max="100" value="60" style="width:150px">
+        </div>
+        <div class="settings-row"><label>Over-Amplification</label>
+          <button class="settings-toggle off" onclick="this.classList.toggle('off')"></button>
+        </div>
+        <div class="settings-row"><label>Output Device</label>
+          <select class="settings-select"><option>Built-in Speakers</option><option>Headphones</option></select>
+        </div>
+      </div>`,
+    power: `
+      <div class="settings-section">
+        <h3>Power</h3>
+        <div class="settings-row"><label>Power Mode</label>
+          <select class="settings-select"><option>Balanced</option><option>Power Saver</option><option>Performance</option></select>
+        </div>
+        <div class="settings-row"><label>Screen Blank</label>
+          <select class="settings-select"><option>5 minutes</option><option selected>10 minutes</option><option>Never</option></select>
+        </div>
+        <div class="settings-row"><label>Automatic Suspend</label>
+          <button class="settings-toggle" onclick="this.classList.toggle('off')"></button>
+        </div>
+      </div>`,
+    mouse: `
+      <div class="settings-section">
+        <h3>Mouse & Touchpad</h3>
+        <div class="settings-row"><label>Mouse Speed</label>
+          <input type="range" min="0" max="100" value="50" style="width:150px">
+        </div>
+        <div class="settings-row"><label>Natural Scrolling</label>
+          <button class="settings-toggle off" onclick="this.classList.toggle('off')"></button>
+        </div>
+        <div class="settings-row"><label>Tap to Click</label>
+          <button class="settings-toggle" onclick="this.classList.toggle('off')"></button>
+        </div>
+      </div>`,
+    keyboard: `
+      <div class="settings-section">
+        <h3>Keyboard</h3>
+        <div class="settings-row"><label>Keyboard Layout</label>
+          <select class="settings-select"><option>English (US)</option><option>English (UK)</option></select>
+        </div>
+        <div class="settings-row"><label>Repeat Keys</label>
+          <button class="settings-toggle" onclick="this.classList.toggle('off')"></button>
+        </div>
+        <div class="settings-row"><label>Repeat Delay</label>
+          <input type="range" min="100" max="1000" value="500" style="width:150px">
+        </div>
+      </div>`,
+    printers: `
+      <div class="settings-section">
+        <h3>Printers</h3>
+        <div style="color:#888;font-size:13px;padding:20px 0">No printers configured.</div>
+        <button class="editor-menu-btn" style="background:#444;color:#ddd;padding:8px 14px;border-radius:6px;cursor:pointer">+ Add Printer</button>
+      </div>`,
+    users: `
+      <div class="settings-section">
+        <h3>Users</h3>
+        <div class="settings-row">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:48px;height:48px;border-radius:50%;background:#5e2c8f;display:flex;align-items:center;justify-content:center;font-size:24px">👤</div>
+            <div><div style="color:#fff;font-size:14px">Ubuntu User</div><div style="color:#888;font-size:12px">Administrator</div></div>
+          </div>
+        </div>
+        <div class="settings-row"><label>Automatic Login</label>
+          <button class="settings-toggle" onclick="this.classList.toggle('off')"></button>
+        </div>
+      </div>`,
+    about: `
+      <div class="settings-section">
+        <h3>About</h3>
+        <div class="settings-row"><label>OS Name</label><span style="color:#aaa">Ubuntu 22.04.3 LTS</span></div>
+        <div class="settings-row"><label>OS Type</label><span style="color:#aaa">64-bit</span></div>
+        <div class="settings-row"><label>GNOME Version</label><span style="color:#aaa">42.9</span></div>
+        <div class="settings-row"><label>Windowing System</label><span style="color:#aaa">Wayland</span></div>
+        <div class="settings-row"><label>Kernel</label><span style="color:#aaa">Linux 5.15.0-91-generic</span></div>
+        <div class="settings-row"><label>Processor</label><span style="color:#aaa">Intel® Core™ i7-12700K × 20</span></div>
+        <div class="settings-row"><label>Memory</label><span style="color:#aaa">8.0 GiB</span></div>
+        <div class="settings-row"><label>Disk</label><span style="color:#aaa">512 GB</span></div>
+      </div>`,
+  };
+  con.innerHTML = pages[page] || '<div style="color:#888;padding:20px">Not implemented</div>';
+}
+
+function setPage(winId, page) {
+  windows[winId].settingsPage = page;
+  renderSettings(winId);
+}
+
+/* ===================================================
+   FIREFOX BROWSER
+=================================================== */
+function buildFirefox(winId, body) {
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+  windows[winId].browserState = { url: '', history: [], histIdx: -1 };
+
+  body.innerHTML = `
+    <div class="browser-toolbar">
+      <button class="browser-btn" onclick="brBack('${winId}')">◀</button>
+      <button class="browser-btn" onclick="brForward('${winId}')">▶</button>
+      <button class="browser-btn" onclick="brRefresh('${winId}')">↺</button>
+      <input class="browser-url" id="br-url-${winId}" value="" placeholder="Search or enter address"
+        onkeydown="if(event.key==='Enter')brNavigate('${winId}',this.value)">
+      <button class="browser-btn" onclick="brNavigate('${winId}',document.getElementById('br-url-${winId}').value)">→</button>
+    </div>
+    <div id="br-view-${winId}" style="flex:1;overflow:auto;background:#1e1e1e">
+    </div>`;
+
+  brShowNewTab(winId);
+}
+
+function brShowNewTab(winId) {
+  const view = document.getElementById('br-view-' + winId);
+  if (!view) return;
+  view.innerHTML = `
+    <div class="browser-newtab">
+      <h2>🦊 Firefox New Tab</h2>
+      <input class="browser-search-bar" placeholder="Search the web or enter address…" 
+        onkeydown="if(event.key==='Enter')brNavigate('${winId}',this.value)">
+      <div class="browser-shortcuts">
+        ${[['https://ubuntu.com','🐧','Ubuntu'],['https://github.com','🐙','GitHub'],
+           ['https://google.com','🔍','Google'],['https://youtube.com','▶️','YouTube'],
+           ['https://wikipedia.org','📖','Wikipedia']].map(([url,ico,name])=>
+          `<div class="browser-shortcut" onclick="brNavigate('${winId}','${url}')">
+            <div class="browser-shortcut-icon" style="background:#2a2a2a">${ico}</div>
+            <div class="browser-shortcut-name">${name}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function brNavigate(winId, url) {
+  if (!url.trim()) return;
+  let nav = url.trim();
+  if (!nav.startsWith('http') && !nav.startsWith('about:')) {
+    if (nav.includes('.') && !nav.includes(' ')) nav = 'https://' + nav;
+    else nav = 'https://www.google.com/search?q=' + encodeURIComponent(nav);
+  }
+  const urlEl = document.getElementById('br-url-' + winId);
+  if (urlEl) urlEl.value = nav;
+
+  const st = windows[winId].browserState;
+  st.history = st.history.slice(0, st.histIdx + 1);
+  st.history.push(nav);
+  st.histIdx = st.history.length - 1;
+  st.url = nav;
+
+  const view = document.getElementById('br-view-' + winId);
+  if (!view) return;
+  view.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:#1e1e2e;color:#aaa;gap:12px;padding:40px">
+      <div style="font-size:48px">🌐</div>
+      <div style="font-size:16px;color:#ddd">${escHtml(nav)}</div>
+      <div style="font-size:13px">External browsing is not available in this simulation.</div>
+      <div style="font-size:12px;color:#666">This is a simulated Ubuntu desktop running in your browser.</div>
+    </div>`;
+}
+
+function brBack(winId) {
+  const st = windows[winId].browserState;
+  if (st.histIdx > 0) { st.histIdx--; brNavigate(winId, st.history[st.histIdx]); }
+}
+function brForward(winId) {
+  const st = windows[winId].browserState;
+  if (st.histIdx < st.history.length - 1) { st.histIdx++; brNavigate(winId, st.history[st.histIdx]); }
+}
+function brRefresh(winId) {
+  const st = windows[winId].browserState;
+  if (st.url) brNavigate(winId, st.url);
+  else brShowNewTab(winId);
+}
+
+/* ===================================================
+   ACTIVITIES OVERLAY
+=================================================== */
+const ALL_APPS = [
+  ['🦊','Firefox','firefox'], ['🖥️','Terminal','terminal'], ['🗂️','Files','files'],
+  ['📝','Text Editor','editor'], ['🧮','Calculator','calculator'],
+  ['🖼️','Image Viewer','imgviewer'], ['⚙️','Settings','settings'],
+];
+
+function buildActivities() {
+  const grid = document.getElementById('activities-grid');
+  if (!grid) return;
+  grid.innerHTML = ALL_APPS.map(([icon,name,id]) =>
+    `<div class="act-app" onclick="openApp('${id}')">
+      <div class="act-icon">${icon}</div>
+      <div class="act-name">${name}</div>
+    </div>`).join('');
+}
+
+function toggleActivities() {
+  const ov = document.getElementById('activities-overlay');
+  if (ov.classList.contains('visible')) closeActivities();
+  else {
+    buildActivities();
+    ov.classList.add('visible');
+    document.getElementById('activities-search').focus();
+  }
+}
+
+function closeActivities() {
+  document.getElementById('activities-overlay').classList.remove('visible');
+}
+
+function filterActivities(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.act-app').forEach(el => {
+    const name = el.querySelector('.act-name').textContent.toLowerCase();
+    el.style.display = name.includes(q) ? '' : 'none';
+  });
+}
+
+/* ===================================================
+   CONTEXT MENU
+=================================================== */
+document.getElementById('desktop').addEventListener('contextmenu', e => {
+  if (e.target.closest('.win') || e.target.closest('#dock') || e.target.closest('.desktop-icon')) return;
+  e.preventDefault();
+  showCtxMenu(e.clientX, e.clientY, [
+    { label:'New Folder',  action: () => notify('Files','Create folder — not implemented in this demo') },
+    { label:'New File',    action: () => notify('Files','Create file — not implemented in this demo') },
+    { sep: true },
+    { label:'Open Terminal Here', action: () => openApp('terminal') },
+    { sep: true },
+    { label:'Change Wallpaper',   action: () => openApp('settings') },
+    { label:'Display Settings',   action: () => { openApp('settings'); setTimeout(() => { for (let id in windows) { if (windows[id].app==='settings') { windows[id].settingsPage='displays'; renderSettings(id); break; } } }, 100); } },
+    { sep: true },
+    { label:'About Ubuntu',       action: () => { openApp('settings'); setTimeout(() => { for (let id in windows) { if (windows[id].app==='settings') { windows[id].settingsPage='about'; renderSettings(id); break; } } }, 100); } },
+  ]);
+});
+
+function ctxDesktopIcon(e, appId) {
+  e.preventDefault(); e.stopPropagation();
+  showCtxMenu(e.clientX, e.clientY, [
+    { label:'Open',     action: () => openApp(appId) },
+    { label:'Rename…',  action: () => notify('Desktop','Rename — not available in demo') },
+    { sep: true },
+    { label:'Delete',   action: () => notify('Desktop','Delete — not available in demo') },
+  ]);
+}
+
+function showCtxMenu(x, y, items) {
+  const menu = document.getElementById('context-menu');
+  menu.innerHTML = items.map(item =>
+    item.sep ? `<div class="ctx-sep"></div>` :
+    `<div class="ctx-item" onclick="hideCtxMenu()">${escHtml(item.label)}</div>`
+  ).join('');
+  // bind actions
+  let i = 0, divs = menu.querySelectorAll('.ctx-item');
+  items.filter(it => !it.sep).forEach((item, idx) => { divs[idx].addEventListener('click', item.action); });
+  menu.style.display = 'block';
+  menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+  menu.style.top  = Math.min(y, window.innerHeight - menu.offsetHeight - 10) + 'px';
+}
+function hideCtxMenu() { document.getElementById('context-menu').style.display = 'none'; }
+document.addEventListener('click', hideCtxMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { hideCtxMenu(); closeActivities(); closePowerMenu(); } });
+
+/* ===================================================
+   POWER MENU
+=================================================== */
+function togglePowerMenu() {
+  const pm = document.getElementById('power-menu');
+  pm.classList.toggle('visible');
+}
+function closePowerMenu() { document.getElementById('power-menu').classList.remove('visible'); }
+
+/* ===================================================
+   NOTIFICATIONS
+=================================================== */
+function notify(title, message) {
+  closePowerMenu(); hideCtxMenu();
+  const area = document.getElementById('notification-area');
+  const el = document.createElement('div');
+  el.className = 'notification';
+  el.innerHTML = `<div class="notif-title">${escHtml(title)}</div>${escHtml(message)}`;
+  area.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+/* ===================================================
+   INIT
+=================================================== */
+// Auto-open terminal on load
+setTimeout(() => { openApp('terminal'); notify('Ubuntu', 'Welcome to Ubuntu 22.04 LTS! 🐧'); }, 300);
+</script>
+</body>
+</html>
