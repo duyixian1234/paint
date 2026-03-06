@@ -101,7 +101,12 @@ html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Ubuntu',
 .terminal-prompt { color: #7ed321; white-space: pre; flex-shrink: 0; }
 .terminal-input-wrap { display: flex; align-items: center; margin-top: 4px; }
 .terminal-input-prompt { color: #7ed321; flex-shrink: 0; }
-#terminal-input { background: transparent; border: none; outline: none; color: #e0e0e0; font-family: inherit; font-size: 13px; flex: 1; caret-color: #7ed321; }
+.terminal-input {
+  background: transparent; outline: none; color: #e0e0e0;
+  font-family: 'Ubuntu Mono', 'Courier New', monospace; font-size: 13px;
+  flex: 1; caret-color: #7ed321; white-space: pre; min-width: 2px;
+  word-break: break-all;
+}
 .term-err { color: #ff6b6b; }
 .term-info { color: #74c7ec; }
 .term-warn { color: #f9e2af; }
@@ -606,7 +611,7 @@ function buildTerminal(winId, body) {
       <div id="tterm-out-${winId}"></div>
       <div class="terminal-input-wrap">
         <span class="terminal-input-prompt" id="tterm-prompt-${winId}"></span>
-        <input id="tterm-in-${winId}" class="terminal-input" type="text" spellcheck="false" autocomplete="off">
+        <span id="tterm-in-${winId}" class="terminal-input" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="off" role="textbox" aria-label="terminal input ${winId}"></span>
       </div>
     </div>`;
 
@@ -624,7 +629,8 @@ function buildTerminal(winId, body) {
 
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
-      const cmd = input.value.trim();
+      e.preventDefault();
+      const cmd = input.textContent.trim();
       // echo line
       const line = document.createElement('div');
       line.className = 'terminal-line';
@@ -638,17 +644,23 @@ function buildTerminal(winId, body) {
         res.innerHTML = result.err ? escHtml(result.err) : (result.html || escHtml(result.out || ''));
         outDiv.appendChild(res);
       }
-      input.value = '';
+      input.textContent = '';
       promptEl.innerHTML = prompt();
       tBody.scrollTop = tBody.scrollHeight;
     } else if (e.key === 'ArrowUp') {
-      state.histIdx = Math.min(state.histIdx + 1, state.history.length - 1);
-      input.value = state.history[state.histIdx] || '';
-      e.preventDefault();
+      if (state.histIdx < state.history.length - 1) {
+        e.preventDefault();
+        state.histIdx++;
+        input.textContent = state.history[state.histIdx] || '';
+        moveCursorToEnd(input);
+      }
     } else if (e.key === 'ArrowDown') {
-      state.histIdx = Math.max(state.histIdx - 1, -1);
-      input.value = state.histIdx >= 0 ? state.history[state.histIdx] : '';
-      e.preventDefault();
+      if (state.histIdx >= 0) {
+        e.preventDefault();
+        state.histIdx--;
+        input.textContent = state.histIdx >= 0 ? state.history[state.histIdx] : '';
+        moveCursorToEnd(input);
+      }
     } else if (e.key === 'Tab') {
       e.preventDefault();
       autocomplete(input, state);
@@ -659,8 +671,17 @@ function buildTerminal(winId, body) {
   });
 }
 
+function moveCursorToEnd(el) {
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
 function autocomplete(input, state) {
-  const val = input.value;
+  const val = input.textContent;
   const tokens = val.split(/\s+/);
   const last = tokens[tokens.length - 1];
   if (!last) return;
@@ -671,7 +692,8 @@ function autocomplete(input, state) {
   const matches = node.children.filter(c => c.startsWith(prefix));
   if (matches.length === 1) {
     tokens[tokens.length-1] = (last.includes('/') ? last.substring(0,last.lastIndexOf('/')+1) : '') + matches[0];
-    input.value = tokens.join(' ');
+    input.textContent = tokens.join(' ');
+    moveCursorToEnd(input);
   }
 }
 
