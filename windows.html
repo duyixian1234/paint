@@ -25,10 +25,10 @@
             min-height: 100vh;
             color: var(--text);
             font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
-            background: radial-gradient(circle at 20% 30%, rgba(0, 195, 255, 0.4), transparent 34%),
-                        radial-gradient(circle at 75% 20%, rgba(136, 92, 255, 0.38), transparent 30%),
-                        radial-gradient(circle at 45% 75%, rgba(0, 166, 255, 0.38), transparent 32%),
-                        #0b1224;
+            background: radial-gradient(1200px 1200px at 20% 30%, rgba(33, 150, 243, 0.28), transparent 40%),
+                        radial-gradient(900px 900px at 80% 20%, rgba(88, 28, 255, 0.28), transparent 36%),
+                        radial-gradient(900px 900px at 70% 86%, rgba(0, 189, 255, 0.35), transparent 38%),
+                        #0a1024;
             overflow: hidden;
         }
 
@@ -36,7 +36,7 @@
             content: "";
             position: fixed;
             inset: 0;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01));
             pointer-events: none;
         }
 
@@ -61,48 +61,80 @@
             position: absolute;
             inset: 0;
             pointer-events: none;
-            background: radial-gradient(500px 350px at 20% 30%, rgba(76, 194, 255, 0.28), transparent 65%),
-                        radial-gradient(460px 360px at 70% 60%, rgba(122, 86, 255, 0.22), transparent 65%);
-            filter: blur(10px);
+            background:
+                radial-gradient(440px 360px at 18% 24%, rgba(76, 194, 255, 0.3), transparent 62%),
+                radial-gradient(520px 420px at 76% 62%, rgba(122, 86, 255, 0.24), transparent 64%),
+                radial-gradient(520px 460px at 62% 86%, rgba(0, 166, 255, 0.18), transparent 70%);
+            filter: blur(12px);
             z-index: 0;
+        }
+
+        .ribbon {
+            position: absolute;
+            filter: blur(36px);
+            opacity: 0.5;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .ribbon.a {
+            width: 780px;
+            height: 320px;
+            top: 120px;
+            left: 160px;
+            background: radial-gradient(circle at 30% 50%, rgba(86, 197, 255, 0.5), transparent 50%),
+                        radial-gradient(circle at 70% 40%, rgba(128, 99, 255, 0.5), transparent 46%);
+            transform: rotate(-8deg);
+        }
+
+        .ribbon.b {
+            width: 680px;
+            height: 280px;
+            bottom: 140px;
+            right: 120px;
+            background: radial-gradient(circle at 40% 50%, rgba(0, 172, 255, 0.4), transparent 48%),
+                        radial-gradient(circle at 78% 40%, rgba(54, 207, 255, 0.4), transparent 44%);
+            transform: rotate(12deg);
         }
 
         .icon-area {
             position: relative;
             z-index: 2;
-            width: 340px;
+            width: 360px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
+            gap: 16px;
         }
 
         .icon {
-            padding: 12px 6px 8px;
-            border-radius: 16px;
+            padding: 12px 8px 10px;
+            border-radius: 14px;
             text-align: center;
             cursor: pointer;
-            border: 1px solid transparent;
-            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.07);
             transition: all 0.2s ease;
             user-select: none;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
         }
 
         .icon:hover {
             border-color: var(--border);
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.16);
+            transform: translateY(-3px);
         }
 
         .icon-visual {
-            width: 64px;
-            height: 64px;
+            width: 60px;
+            height: 60px;
             margin: 0 auto 8px;
-            border-radius: 18px;
+            border-radius: 16px;
             display: grid;
             place-items: center;
             color: #0c1429;
             font-weight: 700;
             font-size: 22px;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35), 0 18px 30px rgba(0, 0, 0, 0.25);
         }
 
         .visual-edge { background: linear-gradient(135deg, #00b7ff, #005eff); color: #f4fbff; }
@@ -127,7 +159,7 @@
             border-radius: 18px;
             background: var(--glass);
             border: 1px solid var(--border);
-            backdrop-filter: blur(18px);
+            backdrop-filter: blur(20px) saturate(140%);
             box-shadow: var(--shadow);
             z-index: 2;
         }
@@ -168,11 +200,11 @@
             width: calc(100% - 32px);
             max-width: 1220px;
             height: 62px;
-            border-radius: 18px;
-            background: rgba(13, 19, 35, 0.68);
+            border-radius: 22px;
+            background: rgba(13, 19, 35, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(18px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(22px) saturate(150%);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -204,7 +236,7 @@
         }
 
         .start-btn {
-            width: 44px;
+            width: 48px;
         }
 
         .win-logo {
@@ -231,6 +263,7 @@
             gap: 8px;
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1);
         }
 
         .search-box span {
@@ -241,6 +274,9 @@
         .task-icon {
             width: 44px;
             position: relative;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            transition: all 0.16s ease;
         }
 
         .task-icon .indicator {
@@ -258,12 +294,18 @@
             background: var(--accent);
         }
 
+        .task-icon:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
         .system-toggle {
             width: 70px;
             padding: 0 10px;
             gap: 6px;
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1);
         }
 
         .system-toggle span {
@@ -290,9 +332,9 @@
             background: var(--glass);
             border: 1px solid var(--border);
             border-radius: 20px;
-            backdrop-filter: blur(22px);
-            box-shadow: var(--shadow);
-            padding: 18px 20px 14px;
+            backdrop-filter: blur(24px) saturate(150%);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+            padding: 20px 22px 16px;
             transition: all 0.18s ease;
             z-index: 4;
         }
@@ -303,12 +345,34 @@
             transform: translateX(-50%) scale(1);
         }
 
+        .start-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 12px;
+            color: var(--muted);
+        }
+
+        .start-search input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+        }
+
         .start-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 10px;
             color: var(--muted);
+            font-size: 14px;
         }
 
         .start-grid {
@@ -320,17 +384,18 @@
 
         .start-app {
             border-radius: 14px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 10px 10px;
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.08);
             text-align: center;
             cursor: pointer;
             transition: all 0.15s ease;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
         }
 
         .start-app:hover {
             border-color: var(--border);
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
         }
 
         .start-app small {
@@ -345,6 +410,7 @@
             border-radius: 14px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.07);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.26);
         }
 
         .recommend h4 {
@@ -368,6 +434,11 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.08);
+        }
+
+        .recommend-item strong {
+            color: var(--text);
         }
 
         .quick-settings {
@@ -378,8 +449,8 @@
             background: var(--glass);
             border: 1px solid var(--border);
             border-radius: 16px;
-            backdrop-filter: blur(22px);
-            box-shadow: var(--shadow);
+            backdrop-filter: blur(24px) saturate(150%);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
             padding: 14px;
             transform: translateY(8px);
             opacity: 0;
@@ -405,7 +476,10 @@
             border-radius: 14px;
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
             font-size: 13px;
             color: var(--muted);
             cursor: pointer;
@@ -417,6 +491,23 @@
             color: var(--text);
             margin-bottom: 4px;
             font-weight: 600;
+        }
+
+        .qs-line {
+            font-size: 12px;
+            color: var(--muted);
+            display: block;
+        }
+
+        .qs-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text);
+            font-size: 14px;
         }
 
         .qs-toggle.active {
@@ -437,6 +528,20 @@
 
         .slider input {
             width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .slider input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+            border: 2px solid rgba(255, 255, 255, 0.6);
         }
 
         .window {
@@ -446,11 +551,11 @@
             width: 720px;
             height: 460px;
             display: none;
-            background: rgba(14, 22, 40, 0.78);
+            background: linear-gradient(145deg, rgba(14, 22, 40, 0.82), rgba(10, 18, 36, 0.78));
             border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            backdrop-filter: blur(16px);
+            border-radius: 18px;
+            box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(18px) saturate(140%);
             overflow: hidden;
             z-index: 3;
         }
@@ -472,13 +577,14 @@
         }
 
         .titlebar {
-            height: 46px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 12px;
+            padding: 0 14px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             cursor: grab;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
         }
 
         .titlebar .title {
@@ -848,6 +954,8 @@
 <body>
     <div class="desktop">
         <div class="glow"></div>
+        <div class="ribbon a"></div>
+        <div class="ribbon b"></div>
 
         <div class="icon-area">
             <div class="icon" data-target="explorer-window">
@@ -900,6 +1008,11 @@
 
         <!-- Start Menu -->
         <div class="start-menu" id="startMenu">
+            <div class="start-search">
+                🔍
+                <input aria-label="开始菜单搜索" placeholder="搜索应用、设置和文档">
+                <span style="font-size:12px;color:var(--muted);">↵</span>
+            </div>
             <div class="start-header">
                 <span>已固定</span>
                 <span>所有应用 &rsaquo;</span>
@@ -972,22 +1085,34 @@
         <div class="quick-settings" id="quickSettings">
             <div class="quick-grid">
                 <div class="qs-toggle active" data-toggle>
-                    <strong>Wi-Fi</strong> Connected
+                    <div class="qs-icon">📶</div>
+                    <strong>Wi‑Fi</strong>
+                    <span class="qs-line">已连接 · Home 5G</span>
                 </div>
                 <div class="qs-toggle" data-toggle>
-                    <strong>蓝牙</strong> 关闭
+                    <div class="qs-icon">🅱️</div>
+                    <strong>蓝牙</strong>
+                    <span class="qs-line">关闭</span>
                 </div>
                 <div class="qs-toggle" data-toggle>
-                    <strong>飞行模式</strong> 关闭
+                    <div class="qs-icon">✈️</div>
+                    <strong>飞行模式</strong>
+                    <span class="qs-line">关闭</span>
                 </div>
                 <div class="qs-toggle" data-toggle>
-                    <strong>夜间灯光</strong> 关闭
+                    <div class="qs-icon">🌙</div>
+                    <strong>夜间灯光</strong>
+                    <span class="qs-line">柔和蓝光</span>
                 </div>
                 <div class="qs-toggle active" data-toggle>
-                    <strong>专注助手</strong> 开启
+                    <div class="qs-icon">🔔</div>
+                    <strong>专注助手</strong>
+                    <span class="qs-line">仅优先级通知</span>
                 </div>
                 <div class="qs-toggle active" data-toggle id="themeToggle">
-                    <strong>深色模式</strong> 打开
+                    <div class="qs-icon">🌓</div>
+                    <strong>深色模式</strong>
+                    <span class="qs-line">点击切换</span>
                 </div>
             </div>
             <div class="slider" style="margin-top:12px;">
